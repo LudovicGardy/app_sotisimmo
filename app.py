@@ -134,7 +134,7 @@ class PropertyApp:
         self.selected_year = st.selectbox("Select a year", years, index=default_year)
 
         ### Load data
-        self.df_pandas = load_data(self.selected_department, self.selected_year)
+        self.df_pandas = load_data(self.selected_department, self.selected_year).copy()
 
         ### Set up the property type selectbox
         property_types = sorted(self.df_pandas['type_local'].unique())
@@ -221,8 +221,9 @@ class PropertyApp:
         # (Optional) Jittering : add a small random value to the coordinates to avoid overlapping markers
         #jitter = 0.001 # adjust this value according to the density of your data
         self.jitter_value = 0.001 if self.use_jitter else 0
-        filtered_df['latitude'] = filtered_df['latitude'] + np.random.uniform(-self.jitter_value, self.jitter_value, size=len(filtered_df))
-        filtered_df['longitude'] = filtered_df['longitude'] + np.random.uniform(-self.jitter_value, self.jitter_value, size=len(filtered_df))
+        filtered_df.loc[:, 'latitude'] = filtered_df['latitude'] + np.random.uniform(-self.jitter_value, self.jitter_value, size=len(filtered_df))
+        filtered_df.loc[:, 'longitude'] = filtered_df['longitude'] + np.random.uniform(-self.jitter_value, self.jitter_value, size=len(filtered_df))
+
         
         # Add a column with a fixed size for all markers
         filtered_df['marker_size'] = 0.5
@@ -257,7 +258,8 @@ class PropertyApp:
         grouped_data = grouped_data.sort_values("code_postal")
 
         # Réinitialisez l'index de grouped_data
-        grouped_data.reset_index(drop=True, inplace=True)
+        grouped_data = grouped_data.reset_index(drop=True)
+
         
         fig = px.line(grouped_data, x=grouped_data.index, y='valeur_fonciere', color='type_local', 
                     markers=True, labels={'valeur_fonciere': 'Average Price'})
