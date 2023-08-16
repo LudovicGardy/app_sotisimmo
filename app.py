@@ -226,7 +226,7 @@ class PropertyApp:
 
         
         # Add a column with a fixed size for all markers
-        filtered_df['marker_size'] = 0.5
+        filtered_df = filtered_df.assign(marker_size=0.5)
 
         size_column = 'marker_size' if self.use_fixed_marker_size else 'valeur_fonciere'
 
