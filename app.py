@@ -240,7 +240,8 @@ class PropertyApp:
                                 size_max=15,  # ajustez la taille maximale des marqueurs ici
                                 zoom=6, 
                                 opacity=0.5,  # ajustez l'opacité ici
-                                title=f"Price distribution for {self.selected_property_type}")       
+                                title=f"Price distribution for {self.selected_property_type}",
+                                hover_data=['code_postal', 'valeur_fonciere', 'longitude', 'latitude'])  # Ajoutez les colonnes à afficher au survol
                         
         # Update the map style
         fig.update_layout(mapbox_style=self.selected_mapbox_style)
@@ -318,7 +319,7 @@ class PropertyApp:
         ### Set up the postal code selectbox and update button
         selected_postcode = st.selectbox("Select a postal code to update map", sorted(unique_postcodes))
 
-        if st.button("Update map"):
+        if st.button(f"Update map to {selected_postcode}"):
             st.session_state.selected_postcode = selected_postcode
             st.experimental_rerun()
 
@@ -351,5 +352,4 @@ class PropertyApp:
 
 
 if __name__ == "__main__":
-    # port = int(os.environ.get("PORT", 8501))
     PropertyApp()
