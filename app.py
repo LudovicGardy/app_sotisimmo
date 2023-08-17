@@ -7,6 +7,8 @@ import plotly.graph_objects as go
 from PIL import Image
 import seaborn as sns
 import numpy as np
+import matplotlib.cm as cm
+import matplotlib.pyplot as plt
 
 # from pyspark.sql import SparkSession
 # from pyspark.sql import functions as F
@@ -35,6 +37,8 @@ class PropertyApp:
         st.set_page_config(layout="wide")
         self.jitter_value = 0
 
+        self.load_summarized_data()
+
         with st.sidebar:
             self.create_toolbar()
             self.load_data_and_initialize_params()
@@ -47,19 +51,21 @@ class PropertyApp:
         img = Image.open(BytesIO(response.content))
         desired_width = 60
         st.sidebar.image(img, width=desired_width, caption='', output_format='PNG')
+        st.divider()
 
-        btn_info = st.sidebar.button("About this app.")
 
-        if btn_info:
-            st.session_state.show_info = not st.session_state.get('show_info', False)
-        if st.session_state.get('show_info', False):
-            info_message = '''This app was created by Ludovic Gardy, Sotis A.I, 2023. The information displayed is based on the French
-             open data portal, where you can find more details about the data. This version 
-             of the app is a prototype, not optimiszed for mobile devices, and the data is limited to the years 2018-2022. A new version 
-             will be released in the future, with more features and a better user experience.
-             A streaming version of the app will come soon as well, with a Kafka cluster and a Spark Streaming job.
-             If you have any questions, contact me at contact@sotisanalytics.com. Enjoy!'''
-            st.info(info_message)
+    def load_summarized_data(self):
+
+        ### Download data summarized from AWS S3
+        url = "https://sotisimmo.s3.eu-north-1.amazonaws.com/geo_dvf_summarized_summary.csv.gz"
+        response = requests.get(url)
+
+        ### Store data in a buffer
+        buffer = BytesIO(response.content)
+
+        ### Load data into a Pandas dataframe
+        self.summarized_df_pandas = pd.read_csv(buffer, compression='gzip', header=0, sep=',', quotechar='"', low_memory=False, 
+                                dtype={"code_postal": str})
 
     def load_data_and_initialize_params(self):
         '''
@@ -126,12 +132,12 @@ class PropertyApp:
         departments.append("973")
         departments.append("974")
         default_dept = departments.index("06")
-        self.selected_department = st.selectbox("Select a department", departments, index=default_dept)
+        self.selected_department = st.selectbox("Département", departments, index=default_dept)
 
         ### Set up the year selectbox
         years = [str(y) for y in range(2018, 2023)]
         default_year = years.index("2022")
-        self.selected_year = st.selectbox("Select a year", years, index=default_year)
+        self.selected_year = st.selectbox("Aannée", years, index=default_year)
 
         ### Load data
         self.df_pandas = load_data(self.selected_department, self.selected_year).copy()
@@ -139,13 +145,75 @@ class PropertyApp:
         ### Set up the property type selectbox
         property_types = sorted(self.df_pandas['type_local'].unique())
         selectbox_key = f"local_type_{self.selected_department}_{self.selected_year}"
-        self.selected_property_type = st.selectbox("Select a property type", property_types, key=selectbox_key)
+        self.selected_property_type = st.selectbox("Type de bien", property_types, key=selectbox_key)
 
         ### Set up the normalization checkbox
-        self.normalize_by_area = st.checkbox("Price per m²")
+        self.normalize_by_area = st.checkbox("Prix au m²", True)
         
         if self.normalize_by_area:
             self.df_pandas['valeur_fonciere'] = self.df_pandas['valeur_fonciere'] / self.df_pandas['surface_reelle_bati']
+
+        st.divider()
+        st.caption("""Cette application a été développée par Ludovic Gardy, Sotis A.I.© 2023. Une prochaine version permettra d'afficher
+                   en direct les prix des biens pour l'année en cours. Rendez-vous sur https://sotisanalytics.com pour en savoir plus
+                   ou pour me contacter. Bonne visite ! """)
+
+    def calculate_median_difference(self):
+
+        # Filter the summarized data for the given department
+        dept_data = self.summarized_df_pandas[self.summarized_df_pandas['code_postal'] == self.selected_department]
+        column_to_use = 'median_value_SQM' if self.normalize_by_area else 'median_value'
+
+        property_types = dept_data['type_local'].unique()
+        annual_diffs = {}
+        percentage_diffs = {}  # Store the percentage difference for each property type
+        
+        for property_type in property_types:
+            type_data = dept_data[dept_data['type_local'] == property_type]
+            type_data = type_data.sort_values(by="Year")
+
+            # Calculate the annual differences
+            type_data['annual_diff'] = type_data[column_to_use].diff()
+            
+            # Calculate the average annual difference (excluding NaN values)
+            annual_average_diff = type_data['annual_diff'].dropna().mean()
+            
+            # Calculate percentage difference between 2018 and 2022
+            try:
+                value_2018 = type_data[type_data['Year'] == 2018][column_to_use].values[0]
+                value_2022 = type_data[type_data['Year'] == 2022][column_to_use].values[0]
+                percentage_diff = ((value_2022 - value_2018) / value_2018) * 100
+            except IndexError:
+                percentage_diff = "NA"
+            
+            annual_diffs[property_type] = annual_average_diff
+            percentage_diffs[property_type] = percentage_diff
+
+        col1, col2, col3 = st.columns(3)
+
+        with col1:
+            appartement_diff = annual_diffs.get(property_types[0], 0)
+            appartement_percentage_diff = percentage_diffs.get(property_types[0], "NA")
+            if appartement_diff > 0:
+                st.metric(label="Appartements", value=f"+{appartement_diff:.2f} € / an", delta=f"{appartement_percentage_diff:.2f} %")
+            else:
+                st.metric(label="Appartements", value=f"{appartement_diff:.2f} € / an", delta=f"{appartement_percentage_diff:.2f} %")
+
+        with col2:
+            locaux_diff = annual_diffs.get(property_types[1], 0)
+            locaux_percentage_diff = percentage_diffs.get(property_types[1], "NA")
+            if locaux_diff > 0:
+                st.metric(label="Locaux industriels", value=f"+{locaux_diff:.2f} € / an", delta=f"{locaux_percentage_diff:.2f} %")
+            else:
+                st.metric(label="Locaux industriels", value=f"{locaux_diff:.2f} € / an", delta=f"{locaux_percentage_diff:.2f} %")
+
+        with col3:
+            maison_diff = annual_diffs.get(property_types[2], 0)
+            maison_percentage_diff = percentage_diffs.get(property_types[2], "NA")
+            if maison_diff > 0:
+                st.metric(label="Maisons", value=f"+{maison_diff:.2f} € / an", delta=f"{maison_percentage_diff:.2f} %")
+            else:
+                st.metric(label="Maisons", value=f"{maison_diff:.2f} € / an", delta=f"{maison_percentage_diff:.2f} %")
 
     def create_plots(self):
         '''
@@ -161,53 +229,58 @@ class PropertyApp:
         '''
 
         # Set the title of the section
-        st.title("Sotis A.I. Immobilier")
-        st.header("A simple app to visualize real estate data in France")
-        st.write("""
-        The charts below depict the property values of real estate assets in France, 
-        based on their geographical location and the type of property (house, apartment, etc.).
-        Initially, the results are presented in a comprehensive manner. Subsequently, you can delve into the details 
-        for a specific geographical area of interest. The sidebar offers a user-friendly interface 
-        for easily configuring the application settings.
+        st.markdown('# Sotis A.I. Immobilier')
+        st.markdown('## Visualisez les prix de l\'immobilier en France')
+        st.markdown("""
+        Les graphiques interactifs ci-dessous représentent les valeurs immobilières des biens (maison, appartement, etc.) en France,
+        en fonction de leur localisation géographique.
         """)
 
-        st.header(f"Price distribution for {self.selected_property_type}")
+        st.markdown(f"### Distribution des prix pour les {self.selected_property_type.lower()}s dans le {self.selected_department} en {self.selected_year}")
 
-        ### Set up the map style and colormap selectboxes
+        ### Section 1
         col1, col2 = st.columns(2)  # Créer deux colonnes
 
         with col1:
             mapbox_styles = ["open-street-map", "carto-positron", "carto-darkmatter", "white-bg"]
             default_map = mapbox_styles.index("open-street-map")
-            self.selected_mapbox_style = st.selectbox("Select a map style", mapbox_styles, index=default_map)
+            self.selected_mapbox_style = st.selectbox("Style de carte", mapbox_styles, index=default_map)
         with col2:
             colormaps = ["Rainbow", "Portland", "Jet", "Viridis", "Plasma", "Cividis", "Inferno", "Magma", "RdBu"]
             default_cmap = colormaps.index("Jet")
-            self.selected_colormap = st.selectbox("Select a colormap", colormaps, index=default_cmap)
+            self.selected_colormap = st.selectbox("Echelle de couleurs", colormaps, index=default_cmap)
 
         col1, col2 = st.columns(2)
         with col1:
-            self.use_fixed_marker_size = st.checkbox("Fixed marker size", False)
+            self.use_fixed_marker_size = st.checkbox("Fixer la taille des points", False)
         with col2:
-            self.use_jitter = st.checkbox("Jitter", True)
+            self.use_jitter = st.checkbox("Eviter la superposition des points", True)
             self.jitter_value = 0.001
 
-
         self.plot_1()
+        st.divider()
 
-
-        st.header("Median price by Property Type & Postal Code")
+        ### Section 2
+        st.markdown(f"### Distribution des prix dans le {self.selected_department} en {self.selected_year}")
         self.plot_2()
+        st.divider()
 
-        st.header(f"Median Property Price by Postal Code for {self.selected_property_type} in {self.selected_year}")
-        st.write("""Numbers above bars represent count of properties per postal code. 
-                 They provide context on the volume of sales for each postal area.""")
-
+        ### Section 3
+        st.markdown(f"### Distribution des prix pour les {self.selected_property_type.lower()}s dans le {self.selected_department} en {self.selected_year}")
+        st.markdown("""Les nombres au-dessus des barres représentent le nombre de biens par code postal. 
+                    Ils fournissent un contexte sur le volume des ventes pour chaque zone.""")
         self.plot_3()
+        st.divider()
 
-        # Set the title of the section
-        st.header("Explore in more details your area of interest")
+        ### Section 4
+        st.markdown(f"### Distribution des prix dans votre quartier en {self.selected_year}")
         self.plot_4()
+        st.divider()
+
+        ### Section 5
+        st.markdown(f"### Evolution des prix des {self.selected_property_type.lower()}s dans le {self.selected_department} entre 2018 et 2022")
+        self.calculate_median_difference()
+        self.plot_5()
 
     def plot_1(self):
         
@@ -219,7 +292,6 @@ class PropertyApp:
             filtered_df = filtered_df[filtered_df['code_postal'] == st.session_state.selected_postcode]
 
         # (Optional) Jittering : add a small random value to the coordinates to avoid overlapping markers
-        #jitter = 0.001 # adjust this value according to the density of your data
         self.jitter_value = 0.001 if self.use_jitter else 0
         filtered_df.loc[:, 'latitude'] = filtered_df['latitude'] + np.random.uniform(-self.jitter_value, self.jitter_value, size=len(filtered_df))
         filtered_df.loc[:, 'longitude'] = filtered_df['longitude'] + np.random.uniform(-self.jitter_value, self.jitter_value, size=len(filtered_df))
@@ -235,13 +307,12 @@ class PropertyApp:
                                 lat='latitude', 
                                 lon='longitude', 
                                 color='valeur_fonciere', 
-                                size=size_column,  # utilisez la colonne 'marker_size' pour définir la taille des marqueurs
+                                size=size_column, 
                                 color_continuous_scale=self.selected_colormap, 
-                                size_max=15,  # ajustez la taille maximale des marqueurs ici
+                                size_max=15, 
                                 zoom=6, 
-                                opacity=0.5,  # ajustez l'opacité ici
-                                title=f"Price distribution for {self.selected_property_type}",
-                                hover_data=['code_postal', 'valeur_fonciere', 'longitude', 'latitude'])  # Ajoutez les colonnes à afficher au survol
+                                opacity=0.5, 
+                                hover_data=['code_postal', 'valeur_fonciere', 'longitude', 'latitude'])
                         
         # Update the map style
         fig.update_layout(mapbox_style=self.selected_mapbox_style)
@@ -270,8 +341,8 @@ class PropertyApp:
         ticktext = grouped_data['code_postal'].unique()
         
         # Utilisez tickvals et ticktext pour mettre à jour l'axe des x
-        fig.update_xaxes(tickvals=tickvals, ticktext=ticktext, range=[tickvals[0], tickvals[-1]])
-        fig.update_yaxes(title_text='Average Price')
+        fig.update_xaxes(tickvals=tickvals, ticktext=ticktext, range=[tickvals[0], tickvals[-1]], title_text = "Code postal")
+        fig.update_yaxes(title_text='Prix médian en €')
         fig.update_layout(legend_orientation="h", 
                         legend=dict(y=1.1, x=0.5, xanchor='center', title_text=''),
                         height=600)
@@ -294,32 +365,21 @@ class PropertyApp:
         # Creation of the bar chart
         fig = px.bar(grouped, x='Postal Code', y='Property Value')
 
-        # Add a subtitle to the bar chart
-        fig.add_annotation(
-            dict(
-                x=0.5,  # x positionne le texte au centre
-                y=1,  # y positionne le texte juste en dessous du titre
-                showarrow=False,
-                xref="paper",
-                yref="paper",
-                font=dict(size=12, color="grey")  # Taille et couleur du sous-titre
-            )
-        )
-
         # Update the bar chart
         fig.update_traces(text=grouped['Count'], textposition='outside')
         fig.update_xaxes(type='category')
-        fig.update_layout(height=600)
+        fig.update_layout(height=600, yaxis_title='Prix médian en €', xaxis_title='Code postal')
         st.plotly_chart(fig, use_container_width=True)
+
 
     def plot_4(self):
 
         unique_postcodes = self.df_pandas['code_postal'].unique()
                 
         ### Set up the postal code selectbox and update button
-        selected_postcode = st.selectbox("Select a postal code to update map", sorted(unique_postcodes))
+        selected_postcode = st.selectbox("Code postal", sorted(unique_postcodes))
 
-        if st.button(f"Update map to {selected_postcode}"):
+        if st.button(f"Actualiser la carte pour {selected_postcode}"):
             st.session_state.selected_postcode = selected_postcode
             st.experimental_rerun()
 
@@ -344,10 +404,62 @@ class PropertyApp:
                                 marker=dict(opacity=0.5)))
             
         fig = go.Figure(data=traces)
-        fig.update_layout(title=f'Property Value Details for Postal Code {selected_postcode}', 
-                        xaxis_title='Property Type', yaxis_title='Property Value')
+        fig.update_layout(xaxis_title='Type de bien', yaxis_title='Prix médian en €')
         fig.update_layout(height=600)
         fig.update_layout(legend_orientation="h", legend=dict(y=1.1, x=0.5, xanchor='center'))
+        st.plotly_chart(fig, use_container_width=True)
+
+    def plot_5(self):
+
+        # Add a selectbox for choosing between bar and line plot
+        plot_types = ["Bar", "Line"]
+        self.selected_plot_type = st.selectbox("Selectionner une visualisation", plot_types, index=0)
+
+        # Determine the column to display
+        value_column = 'median_value_SQM' if self.normalize_by_area else 'median_value'
+
+        # Filter the dataframe by the provided department code
+        dept_data = self.summarized_df_pandas[self.summarized_df_pandas['code_postal'] == self.selected_department]
+
+        # Generate a brighter linear color palette
+        years = sorted(dept_data['Year'].unique())
+        color_scale = cm.Blues(np.linspace(0.3, 1, len(years)))  # Using a brighter section of the viridis colormap
+        color_scale_rgb = ["rgb({}, {}, {})".format(int(r*255), int(g*255), int(b*255)) for r, g, b, _ in color_scale]
+        year_color_map = dict(zip(years, color_scale_rgb))
+
+        if self.selected_plot_type == "Bar":
+            fig = go.Figure()
+
+            # Data for each year
+            for year in years:
+                year_data = dept_data[dept_data['Year'] == year]
+                fig.add_trace(go.Bar(
+                    x=year_data['type_local'],
+                    y=year_data[value_column],
+                    name=str(year),
+                    marker_color=year_color_map[year]
+                ))
+
+            fig.update_layout(barmode='group')  # Ensure bars are grouped, not stacked
+            fig.update_layout(xaxis_title="Type de bien",
+                            yaxis_title="Prix médian en €",
+                            legend_title="Type de bien",
+                            height=600)
+
+        else:
+            # Line plot using plotly
+            fig = px.line(dept_data, 
+                        x='Year', 
+                        y=value_column, 
+                        color='type_local',
+                        labels={"median_value": "Prix médian en €", "Year": "Année"},
+                        markers=True,
+                        height=600)
+
+        # Update the layout of the plotly figure
+        fig.update_layout(legend_orientation="h", 
+                        legend=dict(y=1.1, x=0.5, xanchor='center', title_text=''))
+        
         st.plotly_chart(fig, use_container_width=True)
 
 
