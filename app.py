@@ -283,8 +283,8 @@ class PropertyApp:
             self.jitter_value = 0.001       
 
             self.remove_outliers = st.checkbox("Supprimer les valeurs extrêmes", True)
-            st.caption("""Les valeurs extrêmes sont définies comme étant supérieures à 1,5 fois l'écart interquartile. 
-                       Les retirer permet d'améliorer la lisibilité de l'échelle colorimétrique.""")
+            st.caption("""Retirer les valeurs extrêmes (>1.5*IQR) permet d'améliorer la lisibilité de la carte.
+                       Ces valeurs sont éliminées uniquement sur cette représentation, pas les prochaine.""")
 
         # Filtring the dataframe by property type
         filtered_df = self.df_pandas[self.df_pandas['type_local'] == self.selected_property_type]
