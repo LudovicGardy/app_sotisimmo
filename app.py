@@ -8,7 +8,6 @@ from PIL import Image
 import seaborn as sns
 import numpy as np
 import matplotlib.cm as cm
-import matplotlib.pyplot as plt
 
 # from pyspark.sql import SparkSession
 # from pyspark.sql import functions as F
@@ -239,24 +238,6 @@ class PropertyApp:
         st.markdown(f"### Distribution des prix pour les {self.selected_property_type.lower()}s dans le {self.selected_department} en {self.selected_year}")
 
         ### Section 1
-        col1, col2 = st.columns(2)  # Créer deux colonnes
-
-        with col1:
-            mapbox_styles = ["open-street-map", "carto-positron", "carto-darkmatter", "white-bg"]
-            default_map = mapbox_styles.index("open-street-map")
-            self.selected_mapbox_style = st.selectbox("Style de carte", mapbox_styles, index=default_map)
-        with col2:
-            colormaps = ["Rainbow", "Portland", "Jet", "Viridis", "Plasma", "Cividis", "Inferno", "Magma", "RdBu"]
-            default_cmap = colormaps.index("Jet")
-            self.selected_colormap = st.selectbox("Echelle de couleurs", colormaps, index=default_cmap)
-
-        col1, col2 = st.columns(2)
-        with col1:
-            self.use_fixed_marker_size = st.checkbox("Fixer la taille des points", False)
-        with col2:
-            self.use_jitter = st.checkbox("Eviter la superposition des points", True)
-            self.jitter_value = 0.001
-
         self.plot_1()
         st.divider()
 
@@ -283,13 +264,44 @@ class PropertyApp:
         self.plot_5()
 
     def plot_1(self):
-        
+
+        col1, col2 = st.columns(2)  # Créer deux colonnes
+
+        with col2:
+            mapbox_styles = ["open-street-map", "carto-positron", "carto-darkmatter", "white-bg"]
+            default_map = mapbox_styles.index("open-street-map")
+            self.selected_mapbox_style = st.selectbox("Style de carte", mapbox_styles, index=default_map)
+
+            colormaps = ["Rainbow", "Portland", "Jet", "Viridis", "Plasma", "Cividis", "Inferno", "Magma", "RdBu"]
+            default_cmap = colormaps.index("Jet")
+            self.selected_colormap = st.selectbox("Echelle de couleurs", colormaps, index=default_cmap)
+
+        with col1:
+            self.use_fixed_marker_size = st.checkbox("Fixer la taille des points", False)
+
+            self.use_jitter = st.checkbox("Eviter la superposition des points", True)
+            self.jitter_value = 0.001       
+
+            self.remove_outliers = st.checkbox("Supprimer les valeurs extrêmes", True)
+            st.caption("""Les valeurs extrêmes sont définies comme étant supérieures à 1,5 fois l'écart interquartile. 
+                       Les retirer permet d'améliorer la lisibilité de l'échelle colorimétrique.""")
+
         # Filtring the dataframe by property type
         filtered_df = self.df_pandas[self.df_pandas['type_local'] == self.selected_property_type]
         
         # Further filtering if a postcode is selected
         if hasattr(st.session_state, 'selected_postcode'):
             filtered_df = filtered_df[filtered_df['code_postal'] == st.session_state.selected_postcode]
+
+        if self.remove_outliers:
+            # Calculate Q1, Q3, and IQR
+            Q1 = filtered_df['valeur_fonciere'].quantile(0.25)
+            Q3 = filtered_df['valeur_fonciere'].quantile(0.75)
+            IQR = Q3 - Q1
+            # Calculate the upper fence (using 1.5xIQR)
+            upper_fence = Q3 + 1.5 * IQR
+            # Filter out outliers based on the upper fence
+            filtered_df = filtered_df[filtered_df['valeur_fonciere'] <= upper_fence]
 
         # (Optional) Jittering : add a small random value to the coordinates to avoid overlapping markers
         self.jitter_value = 0.001 if self.use_jitter else 0
