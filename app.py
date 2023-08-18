@@ -15,6 +15,13 @@ import matplotlib.cm as cm
 
 # source env/bin/activate
 
+def shorten_titles(title):
+    mapping = {
+        "Local industriel. commercial ou assimilé": "local commercial",
+        # Ajoutez d'autres mappages au besoin
+    }
+    return mapping.get(title, title)
+
 class PropertyApp:
     '''
     This class creates a Streamlit app that displays the average price of real estate properties in France, by department.
@@ -425,6 +432,7 @@ class PropertyApp:
 
         # Filter the dataframe by the provided department code
         dept_data = self.summarized_df_pandas[self.summarized_df_pandas['code_postal'] == self.selected_department]
+        dept_data.loc[:, 'type_local'] = dept_data['type_local'].apply(shorten_titles)
 
         # Generate a brighter linear color palette
         years = sorted(dept_data['Year'].unique())
@@ -482,6 +490,7 @@ class PropertyApp:
 
         # Si le bouton est cliqué, mettez à jour la carte avec les données du code postal sélectionné
         filtered_by_postcode = self.df_pandas[self.df_pandas['code_postal'] == selected_postcode]
+        filtered_by_postcode.loc[:, 'type_local'] = filtered_by_postcode['type_local'].apply(shorten_titles)
 
         unique_property_types = filtered_by_postcode['type_local'].unique()
 
