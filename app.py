@@ -56,7 +56,7 @@ class PropertyApp:
 
     def create_toolbar(self):
 
-        logo_path = "https://www.sotisanalytics.com/images/logos/Sotis_A-A.png"
+        logo_path = "Sotis_AI_white.png"
         # response = requests.get(logo_path)
         # img = Image.open(BytesIO(response.content))
         desired_width = 60
