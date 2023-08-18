@@ -55,23 +55,25 @@ class PropertyApp:
         self.create_plots()
 
     def create_toolbar(self):
-        col1, col2 = st.columns(2)
 
-        with col1:
-            logo_path = "https://www.sotisanalytics.com/images/logos/Sotis_A-A.png"
-            response = requests.get(logo_path)
-            img = Image.open(BytesIO(response.content))
-            desired_width = 60
+        logo_path = "https://www.sotisanalytics.com/images/logos/Sotis_A-A.png"
+        # response = requests.get(logo_path)
+        # img = Image.open(BytesIO(response.content))
+        desired_width = 60
 
-            # Utilisation d'un conteneur HTML pour aligner l'image et le texte
-            html_content = f"""
-            <div style="display: flex; align-items: center;">
-                <img src="{logo_path}" width="{desired_width}" style="margin-right: 15px;">
-                <h1 style='text-align: left; color: #fff; width:200px;'>Sotis A.I. #app</h1>
-            </div>
-            """
-            st.markdown(html_content, unsafe_allow_html=True)
+        # Utilisation d'un conteneur HTML pour aligner l'image et le texte
+        html_content = f"""
+        <div style="display: flex; align-items: center;">
+            <img src="{logo_path}" width="{desired_width}" style="margin-right: 15px;">
+            <h1 style='text-align: left; color: #fff; width:200px'>Sotis A.I. #app</h1>
+        </div>
+        """
+        st.markdown(html_content, unsafe_allow_html=True)
 
+        st.caption("""Cette application a été imaginée et développée par Ludovic Gardy, Sotis A.I.© 2023. Une prochaine version permettra d'afficher
+                   en direct les prix des biens pour l'année en cours. Rendez-vous sur https://sotisanalytics.com pour en savoir plus
+                   ou pour me contacter. Bonne visite ! """)
+        
         st.divider()
 
 
@@ -184,10 +186,12 @@ class PropertyApp:
         if self.normalize_by_area:
             self.df_pandas['valeur_fonciere'] = self.df_pandas['valeur_fonciere'] / self.df_pandas['surface_reelle_bati']
 
-        st.divider()
-        st.caption("""Cette application a été imaginée et développée par Ludovic Gardy, Sotis A.I.© 2023. Une prochaine version permettra d'afficher
-                   en direct les prix des biens pour l'année en cours. Rendez-vous sur https://sotisanalytics.com pour en savoir plus
-                   ou pour me contacter. Bonne visite ! """)
+        # Ajoutez ceci après les autres éléments dans la barre latérale
+        self.selected_plots = st.multiselect("Supprimer / ajouter des graphiques", 
+                                            ["Carte", "Fig. 1", "Fig. 2", "Fig. 3", "Fig. 4"],
+                                            ["Carte", "Fig. 1", "Fig. 2", "Fig. 3", "Fig. 4"])
+
+
 
     def calculate_median_difference(self):
 
@@ -267,39 +271,41 @@ class PropertyApp:
         en fonction de leur localisation géographique.
         """)
 
-
         ### Section 1
-        # Mettre à jour le titre en fonction de la sélection du code postal
-        if 'selected_postcode_title' in st.session_state and st.session_state.selected_postcode_title:
-            map_title = f"Distribution des prix pour les {self.selected_property_type.lower()}s dans le {st.session_state.selected_postcode_title} en {self.selected_year}"
-        else:
-            map_title = f"Distribution des prix pour les {self.selected_property_type.lower()}s dans le {self.selected_department} en {self.selected_year}"
-
-        st.markdown(f"### {map_title}")
-        self.plot_1()
-        st.divider()
+        if "Carte" in self.selected_plots:
+            if 'selected_postcode_title' in st.session_state and st.session_state.selected_postcode_title:
+                map_title = f"Distribution des prix pour les {self.selected_property_type.lower()}s dans le {st.session_state.selected_postcode_title} en {self.selected_year}"
+            else:
+                map_title = f"Distribution des prix pour les {self.selected_property_type.lower()}s dans le {self.selected_department} en {self.selected_year}"
+            st.markdown(f"### {map_title}")
+            self.plot_1()
+            st.divider()
 
         ### Section 2
-        st.markdown(f"### Distribution des prix dans le {self.selected_department} en {self.selected_year}")
-        self.plot_2()
-        st.divider()
+        if "Fig. 1" in self.selected_plots:
+            st.markdown(f"### Distribution des prix dans le {self.selected_department} en {self.selected_year}")
+            self.plot_2()
+            st.divider()
 
         ### Section 3
-        st.markdown(f"### Distribution des prix pour les {self.selected_property_type.lower()}s dans le {self.selected_department} en {self.selected_year}")
-        st.markdown("""Les nombres au-dessus des barres représentent le nombre de biens par code postal. 
-                    Ils fournissent un contexte sur le volume des ventes pour chaque zone.""")
-        self.plot_3()
-        st.divider()
+        if "Fig. 2" in self.selected_plots:
+            st.markdown(f"### Distribution des prix pour les {self.selected_property_type.lower()}s dans le {self.selected_department} en {self.selected_year}")
+            st.markdown("""Les nombres au-dessus des barres représentent le nombre de biens par code postal. 
+                        Ils fournissent un contexte sur le volume des ventes pour chaque zone.""")
+            self.plot_3()
+            st.divider()
 
         ### Section 4
-        st.markdown(f"### Evolution des prix des {self.selected_property_type.lower()}s dans le {self.selected_department} entre 2018 et 2022")
-        self.calculate_median_difference()
-        self.plot_4()
-        st.divider()
+        if "Fig. 3" in self.selected_plots:
+            st.markdown(f"### Evolution des prix des {self.selected_property_type.lower()}s dans le {self.selected_department} entre 2018 et 2022")
+            self.calculate_median_difference()
+            self.plot_4()
+            st.divider()
 
         ### Section 5
-        st.markdown(f"### Distribution des prix dans votre quartier en {self.selected_year}")
-        self.plot_5()
+        if "Fig. 4" in self.selected_plots:
+            st.markdown(f"### Distribution des prix dans votre quartier en {self.selected_year}")
+            self.plot_5()
 
     def plot_1(self):
 
