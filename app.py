@@ -36,6 +36,9 @@ class PropertyApp:
         st.set_page_config(layout="wide")
         self.jitter_value = 0
 
+        if 'selected_postcode_title' not in st.session_state:
+            st.session_state.selected_postcode_title = None
+
         self.load_summarized_data()
 
         with st.sidebar:
@@ -45,11 +48,23 @@ class PropertyApp:
         self.create_plots()
 
     def create_toolbar(self):
-        logo_path = "https://www.sotisanalytics.com/images/logos/Sotis_A-A.png"  
-        response = requests.get(logo_path)
-        img = Image.open(BytesIO(response.content))
-        desired_width = 60
-        st.sidebar.image(img, width=desired_width, caption='', output_format='PNG')
+        col1, col2 = st.columns(2)
+
+        with col1:
+            logo_path = "https://www.sotisanalytics.com/images/logos/Sotis_A-A.png"
+            response = requests.get(logo_path)
+            img = Image.open(BytesIO(response.content))
+            desired_width = 60
+
+            # Utilisation d'un conteneur HTML pour aligner l'image et le texte
+            html_content = f"""
+            <div style="display: flex; align-items: center;">
+                <img src="{logo_path}" width="{desired_width}" style="margin-right: 15px;">
+                <h1 style='text-align: left; color: #fff; width:200px;'>Sotis A.I. #app</h1>
+            </div>
+            """
+            st.markdown(html_content, unsafe_allow_html=True)
+
         st.divider()
 
 
@@ -133,6 +148,16 @@ class PropertyApp:
         default_dept = departments.index("06")
         self.selected_department = st.selectbox("Département", departments, index=default_dept)
 
+        # Check if the department has changed and reset the session state for the postcode if needed
+        if 'previous_selected_department' in st.session_state and st.session_state.previous_selected_department != self.selected_department:
+            if 'selected_postcode_title' in st.session_state:
+                del st.session_state.selected_postcode_title
+            if 'selected_postcode' in st.session_state:
+                del st.session_state.selected_postcode
+
+        # Update the previous selected department in the session state
+        st.session_state.previous_selected_department = self.selected_department
+
         ### Set up the year selectbox
         years = [str(y) for y in range(2018, 2023)]
         default_year = years.index("2022")
@@ -153,7 +178,7 @@ class PropertyApp:
             self.df_pandas['valeur_fonciere'] = self.df_pandas['valeur_fonciere'] / self.df_pandas['surface_reelle_bati']
 
         st.divider()
-        st.caption("""Cette application a été développée par Ludovic Gardy, Sotis A.I.© 2023. Une prochaine version permettra d'afficher
+        st.caption("""Cette application a été imaginée et développée par Ludovic Gardy, Sotis A.I.© 2023. Une prochaine version permettra d'afficher
                    en direct les prix des biens pour l'année en cours. Rendez-vous sur https://sotisanalytics.com pour en savoir plus
                    ou pour me contacter. Bonne visite ! """)
 
@@ -228,16 +253,22 @@ class PropertyApp:
         '''
 
         # Set the title of the section
-        st.markdown('# Sotis A.I. Immobilier')
+        # st.markdown('# Sotis A.I. Immobilier')
         st.markdown('## Visualisez les prix de l\'immobilier en France')
         st.markdown("""
         Les graphiques interactifs ci-dessous représentent les valeurs immobilières des biens (maison, appartement, etc.) en France,
         en fonction de leur localisation géographique.
         """)
 
-        st.markdown(f"### Distribution des prix pour les {self.selected_property_type.lower()}s dans le {self.selected_department} en {self.selected_year}")
 
         ### Section 1
+        # Mettre à jour le titre en fonction de la sélection du code postal
+        if 'selected_postcode_title' in st.session_state and st.session_state.selected_postcode_title:
+            map_title = f"Distribution des prix pour les {self.selected_property_type.lower()}s dans le {st.session_state.selected_postcode_title} en {self.selected_year}"
+        else:
+            map_title = f"Distribution des prix pour les {self.selected_property_type.lower()}s dans le {self.selected_department} en {self.selected_year}"
+
+        st.markdown(f"### {map_title}")
         self.plot_1()
         st.divider()
 
@@ -254,13 +285,13 @@ class PropertyApp:
         st.divider()
 
         ### Section 4
-        st.markdown(f"### Distribution des prix dans votre quartier en {self.selected_year}")
+        st.markdown(f"### Evolution des prix des {self.selected_property_type.lower()}s dans le {self.selected_department} entre 2018 et 2022")
+        self.calculate_median_difference()
         self.plot_4()
         st.divider()
 
         ### Section 5
-        st.markdown(f"### Evolution des prix des {self.selected_property_type.lower()}s dans le {self.selected_department} entre 2018 et 2022")
-        self.calculate_median_difference()
+        st.markdown(f"### Distribution des prix dans votre quartier en {self.selected_year}")
         self.plot_5()
 
     def plot_1(self):
@@ -279,7 +310,7 @@ class PropertyApp:
         with col1:
             self.use_fixed_marker_size = st.checkbox("Fixer la taille des points", False)
 
-            self.use_jitter = st.checkbox("Eviter la superposition des points", True)
+            self.use_jitter = st.checkbox("Eviter la superposition des points", False)
             self.jitter_value = 0.001       
 
             self.remove_outliers = st.checkbox("Supprimer les valeurs extrêmes", True)
@@ -383,45 +414,7 @@ class PropertyApp:
         fig.update_layout(height=600, yaxis_title='Prix médian en €', xaxis_title='Code postal')
         st.plotly_chart(fig, use_container_width=True)
 
-
     def plot_4(self):
-
-        unique_postcodes = self.df_pandas['code_postal'].unique()
-                
-        ### Set up the postal code selectbox and update button
-        selected_postcode = st.selectbox("Code postal", sorted(unique_postcodes))
-
-        if st.button(f"Actualiser la carte pour {selected_postcode}"):
-            st.session_state.selected_postcode = selected_postcode
-            st.experimental_rerun()
-
-        # Si le bouton est cliqué, mettez à jour la carte avec les données du code postal sélectionné
-        filtered_by_postcode = self.df_pandas[self.df_pandas['code_postal'] == selected_postcode]
-
-        unique_property_types = filtered_by_postcode['type_local'].unique()
-
-        traces = []
-
-        color_palette = sns.color_palette('tab10', len(unique_property_types)).as_hex()
-        colors = dict(zip(unique_property_types, color_palette))
-
-        for property_type in unique_property_types:
-            subset = filtered_by_postcode[filtered_by_postcode['type_local'] == property_type]
-            traces.append(go.Box(y=subset['valeur_fonciere'], 
-                                name=property_type, 
-                                marker_color=colors[property_type], 
-                                boxpoints='all', 
-                                jitter=0.3, 
-                                pointpos=0, 
-                                marker=dict(opacity=0.5)))
-            
-        fig = go.Figure(data=traces)
-        fig.update_layout(xaxis_title='Type de bien', yaxis_title='Prix médian en €')
-        fig.update_layout(height=600)
-        fig.update_layout(legend_orientation="h", legend=dict(y=1.1, x=0.5, xanchor='center'))
-        st.plotly_chart(fig, use_container_width=True)
-
-    def plot_5(self):
 
         # Add a selectbox for choosing between bar and line plot
         plot_types = ["Bar", "Line"]
@@ -472,6 +465,45 @@ class PropertyApp:
         fig.update_layout(legend_orientation="h", 
                         legend=dict(y=1.1, x=0.5, xanchor='center', title_text=''))
         
+        st.plotly_chart(fig, use_container_width=True)
+
+    def plot_5(self):
+
+        unique_postcodes = self.df_pandas['code_postal'].unique()
+                
+        ### Set up the postal code selectbox and update button
+        selected_postcode = st.selectbox("Code postal", sorted(unique_postcodes))
+
+        if st.button(f"Actualiser la carte pour {selected_postcode}"):
+            st.session_state.selected_postcode = selected_postcode
+            st.session_state.selected_postcode_title = selected_postcode
+            st.experimental_rerun()
+
+
+        # Si le bouton est cliqué, mettez à jour la carte avec les données du code postal sélectionné
+        filtered_by_postcode = self.df_pandas[self.df_pandas['code_postal'] == selected_postcode]
+
+        unique_property_types = filtered_by_postcode['type_local'].unique()
+
+        traces = []
+
+        color_palette = sns.color_palette('tab10', len(unique_property_types)).as_hex()
+        colors = dict(zip(unique_property_types, color_palette))
+
+        for property_type in unique_property_types:
+            subset = filtered_by_postcode[filtered_by_postcode['type_local'] == property_type]
+            traces.append(go.Box(y=subset['valeur_fonciere'], 
+                                name=property_type, 
+                                marker_color=colors[property_type], 
+                                boxpoints='all', 
+                                jitter=0.3, 
+                                pointpos=0, 
+                                marker=dict(opacity=0.5)))
+            
+        fig = go.Figure(data=traces)
+        fig.update_layout(xaxis_title='Type de bien', yaxis_title='Prix médian en €')
+        fig.update_layout(height=600)
+        fig.update_layout(legend_orientation="h", legend=dict(y=1.1, x=0.5, xanchor='center'))
         st.plotly_chart(fig, use_container_width=True)
 
 
