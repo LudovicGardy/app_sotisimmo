@@ -283,13 +283,13 @@ class PropertyApp:
 
         ### Section 2
         if "Fig. 1" in self.selected_plots:
-            st.markdown(f"### Distribution des prix dans le {self.selected_department} en {self.selected_year}")
+            st.markdown(f"### Fig 1. Distribution des prix dans le {self.selected_department} en {self.selected_year}")
             self.plot_2()
             st.divider()
 
         ### Section 3
         if "Fig. 2" in self.selected_plots:
-            st.markdown(f"### Distribution des prix pour les {self.selected_property_type.lower()}s dans le {self.selected_department} en {self.selected_year}")
+            st.markdown(f"### Fig 2. Distribution des prix pour les {self.selected_property_type.lower()}s dans le {self.selected_department} en {self.selected_year}")
             st.markdown("""Les nombres au-dessus des barres représentent le nombre de biens par code postal. 
                         Ils fournissent un contexte sur le volume des ventes pour chaque zone.""")
             self.plot_3()
@@ -297,14 +297,14 @@ class PropertyApp:
 
         ### Section 4
         if "Fig. 3" in self.selected_plots:
-            st.markdown(f"### Evolution des prix des {self.selected_property_type.lower()}s dans le {self.selected_department} entre 2018 et 2022")
+            st.markdown(f"### Fig 3. Evolution des prix des {self.selected_property_type.lower()}s dans le {self.selected_department} entre 2018 et 2022")
             self.calculate_median_difference()
             self.plot_4()
             st.divider()
 
         ### Section 5
         if "Fig. 4" in self.selected_plots:
-            st.markdown(f"### Distribution des prix dans votre quartier en {self.selected_year}")
+            st.markdown(f"### Fig 4. Distribution des prix dans votre quartier en {self.selected_year}")
             self.plot_5()
 
     def plot_1(self):
