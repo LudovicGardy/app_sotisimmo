@@ -14,13 +14,14 @@ import matplotlib.cm as cm
 # import os
 
 # source env/bin/activate
+##
 
 def shorten_titles(title):
     mapping = {
         "Local industriel. commercial ou assimilé": "local commercial",
         # Ajoutez d'autres mappages au besoin
     }
-    return mapping.get(title, title)
+    return mapping.get(title, title) 
 
 class PropertyApp:
     '''
