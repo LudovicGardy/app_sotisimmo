@@ -4,7 +4,7 @@ from io import BytesIO
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-from PIL import Image
+# from PIL import Image
 import seaborn as sns
 import numpy as np
 import matplotlib.cm as cm
@@ -57,23 +57,19 @@ class PropertyApp:
     def create_toolbar(self):
 
         logo_path = "https://sotisimmo.s3.eu-north-1.amazonaws.com/Sotis_A-A-white.png"
-        # response = requests.get(logo_path)
-        # img = Image.open(BytesIO(response.content))
         desired_width = 60
 
-        # Utilisation d'un conteneur HTML pour aligner l'image et le texte
-        html_content = f"""
-        <div style="display: flex; align-items: center;">
-            <img src="{logo_path}" width="{desired_width}" style="margin-right: 15px;">
-            <h1 style='text-align: left; color: #fff; width:200px'>Sotis A.I. #app</h1>
-        </div>
-        """
-        st.markdown(html_content, unsafe_allow_html=True)
-
-        st.caption("""Cette application a été imaginée et développée par Ludovic Gardy, Sotis A.I.© 2023. Une prochaine version permettra d'afficher
-                   en direct les prix des biens pour l'année en cours. Rendez-vous sur https://sotisanalytics.com pour en savoir plus
-                   ou pour me contacter. Bonne visite ! """)
+        col1, col2 = st.columns([1, 3])
         
+        with col1:
+            st.image(logo_path, width=desired_width)
+        with col2:
+            st.write("# Sotis A.I. #app")
+
+        st.caption("""Cette application a été imaginée et développée par Ludovic Gardy, Sotis A.I.© 2023. 
+                    Une prochaine version permettra d'afficher en direct les prix des biens pour l'année en cours. 
+                    Rendez-vous sur [sotisanalytics.com](https://sotisanalytics.com) pour en savoir plus ou pour me contacter. Bonne visite !""")
+
         st.divider()
 
 
