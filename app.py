@@ -493,10 +493,8 @@ class PropertyApp:
                 st.session_state.selected_postcode_title = selected_postcode
                 st.experimental_rerun()
         with col2:
-            st.caption("""'Actualiser la carte' est un bouton servant à rafraîchir la carte pour afficher les 
-                       données de votre quartier spécifiquement, au lieu d'afficher tout le département. 
-                       Vous pouvez revenir en arrière en sélectionnant un nouveau département 
-                       dans la barre d'outil.""")
+            st.caption("""**'Actualiser la carte'** sert à rafraîchir la carte, tout en haut de la fenêtre, pour afficher les 
+                       données de votre quartier spécifiquement au lieu d'afficher tout le département.""")
             
         # Si le bouton est cliqué, mettez à jour la carte avec les données du code postal sélectionné
         filtered_by_postcode = self.df_pandas[self.df_pandas['code_postal'] == selected_postcode]
@@ -527,12 +525,13 @@ class PropertyApp:
                                     marker=dict(opacity=0.5)))
 
             fig = go.Figure(data=traces)
-            fig.update_layout(yaxis_title='Prix médian en €') #xaxis_title='Type de bien'
+            fig.update_layout(yaxis_title='Prix médian en €')
             fig.update_layout(height=600)
             fig.update_layout(legend_orientation="h", legend=dict(y=1.1, x=0.5, xanchor='center'))
-            fig.update_layout(
-                margin=dict(t=20, b=80, l=50, r=50)  # `t` contrôle la marge supérieure
-            )
+            fig.update_layout(margin=dict(t=20, b=80, l=50, r=50))
+            
+            # Retirer les labels des x
+            fig.update_xaxes(showticklabels=False)
 
             # Ajoutez un titre en utilisant st.markdown() avant d'afficher le graphique
             with cols[idx]:
