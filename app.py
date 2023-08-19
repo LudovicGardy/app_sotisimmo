@@ -264,8 +264,10 @@ class PropertyApp:
         # st.markdown('# Sotis A.I. Immobilier')
         st.markdown('## Visualisez les prix de l\'immobilier en France')
         st.markdown("""
-        Les graphiques interactifs ci-dessous représentent les valeurs immobilières des biens (maison, appartement, etc.) en France,
-        en fonction de leur localisation géographique.
+        🏠 Les graphiques interactifs ci-dessous représentent les valeurs immobilières des biens (maison, appartement, etc.) en France,
+        en fonction de leur localisation géographique. La version pour **téléphone portable** 📳 de cette application fonctionne, mais doit encore être optimisée. 
+        Si vous naviguez sur un téléphone, sachez que vous pouvez cliquer sur la **flèche en haut à gauche** ⬇️ de l'écran pour
+        ouvrir le **menu latéral** ⚙️ qui vous permettra de choisir le département, l'année et le type de bien immobilier qui vous intéressent.
         """)
 
         ### Section 1
@@ -457,10 +459,6 @@ class PropertyApp:
                 ))
 
             fig.update_layout(barmode='group')  # Ensure bars are grouped, not stacked
-            fig.update_layout(xaxis_title="Type de bien",
-                            yaxis_title="Prix médian en €",
-                            legend_title="Type de bien",
-                            height=600)
 
         else:
             # Line plot using plotly
@@ -473,6 +471,10 @@ class PropertyApp:
                         height=600)
 
         # Update the layout of the plotly figure
+        fig.update_layout(xaxis_title="Type de bien",
+                yaxis_title="Prix médian en €",
+                legend_title="Type de bien",
+                height=600)
         fig.update_layout(legend_orientation="h", 
                         legend=dict(y=1.1, x=0.5, xanchor='center', title_text=''))
         
