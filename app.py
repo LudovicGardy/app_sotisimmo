@@ -190,7 +190,7 @@ class PropertyApp:
 
 
 
-    def calculate_median_difference_v2(self, property_type):
+    def calculate_median_difference(self, property_type):
 
         # Filter the summarized data for the given department
         dept_data = self.summarized_df_pandas[self.summarized_df_pandas['code_postal'] == self.selected_department]
@@ -217,64 +217,6 @@ class PropertyApp:
         
 
         return(annual_average_diff, percentage_diff)
-
-
-    def calculate_median_difference(self):
-
-        # Filter the summarized data for the given department
-        dept_data = self.summarized_df_pandas[self.summarized_df_pandas['code_postal'] == self.selected_department]
-        column_to_use = 'median_value_SQM' if self.normalize_by_area else 'median_value'
-
-        property_types = dept_data['type_local'].unique()
-        annual_diffs = {}
-        percentage_diffs = {}  # Store the percentage difference for each property type
-        
-        for property_type in property_types:
-            type_data = dept_data[dept_data['type_local'] == property_type]
-            type_data = type_data.sort_values(by="Year")
-
-            # Calculate the annual differences
-            type_data['annual_diff'] = type_data[column_to_use].diff()
-            
-            # Calculate the average annual difference (excluding NaN values)
-            annual_average_diff = type_data['annual_diff'].dropna().mean()
-            
-            # Calculate percentage difference between 2018 and 2022
-            try:
-                value_2018 = type_data[type_data['Year'] == 2018][column_to_use].values[0]
-                value_2022 = type_data[type_data['Year'] == 2022][column_to_use].values[0]
-                percentage_diff = ((value_2022 - value_2018) / value_2018) * 100
-            except IndexError:
-                percentage_diff = "NA"
-            
-            annual_diffs[property_type] = annual_average_diff
-            percentage_diffs[property_type] = percentage_diff
-
-        col1, col2, col3 = st.columns(3)
-
-        with col1:
-            appartement_diff = annual_diffs.get(property_types[0], 0)
-            appartement_percentage_diff = percentage_diffs.get(property_types[0], "NA")
-            if appartement_diff > 0:
-                st.metric(label="Appartements", value=f"+{appartement_diff:.2f} € / an", delta=f"{appartement_percentage_diff:.2f} %")
-            else:
-                st.metric(label="Appartements", value=f"{appartement_diff:.2f} € / an", delta=f"{appartement_percentage_diff:.2f} %")
-
-        with col2:
-            locaux_diff = annual_diffs.get(property_types[1], 0)
-            locaux_percentage_diff = percentage_diffs.get(property_types[1], "NA")
-            if locaux_diff > 0:
-                st.metric(label="Locaux industriels", value=f"+{locaux_diff:.2f} € / an", delta=f"{locaux_percentage_diff:.2f} %")
-            else:
-                st.metric(label="Locaux industriels", value=f"{locaux_diff:.2f} € / an", delta=f"{locaux_percentage_diff:.2f} %")
-
-        with col3:
-            maison_diff = annual_diffs.get(property_types[2], 0)
-            maison_percentage_diff = percentage_diffs.get(property_types[2], "NA")
-            if maison_diff > 0:
-                st.metric(label="Maisons", value=f"+{maison_diff:.2f} € / an", delta=f"{maison_percentage_diff:.2f} %")
-            else:
-                st.metric(label="Maisons", value=f"{maison_diff:.2f} € / an", delta=f"{maison_percentage_diff:.2f} %")
 
     def create_plots(self):
         '''
@@ -306,13 +248,13 @@ class PropertyApp:
             else:
                 map_title = f"Distribution des prix pour les {self.selected_property_type.lower()}s dans le {self.selected_department} en {self.selected_year}"
             st.markdown(f"### {map_title}")
-            self.plot_1()
+            self.plot_map()
             st.divider()
 
         ### Section 2
         if "Fig. 1" in self.selected_plots:
             st.markdown(f"### Fig 1. Distribution des prix dans le {self.selected_department} en {self.selected_year}")
-            self.plot_2()
+            self.plot_1()
             st.divider()
 
         ### Section 3
@@ -320,32 +262,32 @@ class PropertyApp:
             st.markdown(f"### Fig 2. Distribution des prix pour les {self.selected_property_type.lower()}s dans le {self.selected_department} en {self.selected_year}")
             st.markdown("""Les nombres au-dessus des barres représentent le nombre de biens par code postal. 
                         Ils fournissent un contexte sur le volume des ventes pour chaque zone.""")
-            self.plot_3()
+            self.plot_2()
             st.divider()
 
         ### Section 4
         if "Fig. 3" in self.selected_plots:
             st.markdown(f"### Fig 3. Evolution des prix des {self.selected_property_type.lower()}s dans le {self.selected_department} entre 2018 et 2022")
-            self.plot_4()
+            self.plot_3()
             st.divider()
 
         ### Section 5
         if "Fig. 4" in self.selected_plots:
             st.markdown(f"### Fig 4. Distribution des prix dans votre quartier en {self.selected_year}")
-            self.plot_5()
+            self.plot_4()
 
-    def plot_1(self):
+    def plot_map(self):
 
         col1, col2 = st.columns(2)  # Créer deux colonnes
 
         with col2:
             mapbox_styles = ["open-street-map", "carto-positron", "carto-darkmatter", "white-bg"]
             default_map = mapbox_styles.index("open-street-map")
-            self.selected_mapbox_style = st.selectbox("Style de carte", mapbox_styles, index=default_map)
+            self.selected_mapbox_style = st.selectbox("🌏 Style de carte", mapbox_styles, index=default_map)
 
             colormaps = ["Rainbow", "Portland", "Jet", "Viridis", "Plasma", "Cividis", "Inferno", "Magma", "RdBu"]
             default_cmap = colormaps.index("Jet")
-            self.selected_colormap = st.selectbox("Echelle de couleurs", colormaps, index=default_cmap)
+            self.selected_colormap = st.selectbox("🎨 Echelle de couleurs", colormaps, index=default_cmap)
 
         with col1:
             self.use_fixed_marker_size = st.checkbox("Fixer la taille des points", False)
@@ -404,7 +346,7 @@ class PropertyApp:
 
         st.plotly_chart(fig, use_container_width=True)
 
-    def plot_2(self):
+    def plot_1(self):
         grouped_data = self.df_pandas.groupby(["code_postal", "type_local"]).agg({
             "valeur_fonciere": "median"
         }).reset_index()
@@ -431,7 +373,10 @@ class PropertyApp:
                         height=600)
         st.plotly_chart(fig, use_container_width=True)
 
-    def plot_3(self):
+    def plot_2(self):
+
+        # Check for orientation preference
+        orientation = st.radio("Orientation", ["Barres horizontales (Grand écran)", "Barres verticales (Petit écran)"], label_visibility="hidden")
 
         # Filtring the dataframe by property type
         filtered_df = self.df_pandas[self.df_pandas['type_local'] == self.selected_property_type]
@@ -446,20 +391,32 @@ class PropertyApp:
         grouped.columns = ['Postal Code', 'Property Value', 'Count']
 
         # Creation of the bar chart
-        fig = px.bar(grouped, x='Postal Code', y='Property Value')
+        if orientation == "Barres horizontales (Grand écran)":
+            fig = px.bar(grouped, x='Postal Code', y='Property Value')
+            fig.update_layout(yaxis_title='Prix médian en €', xaxis_title='Code postal')
+            fig.update_yaxes(type='linear')
+            fig.update_xaxes(type='category')
+            fig.update_layout(height=600)
+        else:
+            fig = px.bar(grouped, y='Postal Code', x='Property Value', orientation='h')
+            fig.update_layout(xaxis_title='Prix médian en €', yaxis_title='Code postal')
+            fig.update_yaxes(type='category')
+            fig.update_xaxes(type='linear')
+            fig.update_layout(height=1200)
 
         # Update the bar chart
         fig.update_traces(text=grouped['Count'], textposition='outside')
-        fig.update_xaxes(type='category')
-        fig.update_layout(height=600, yaxis_title='Prix médian en €', xaxis_title='Code postal')
         st.plotly_chart(fig, use_container_width=True)
 
 
-    def plot_4(self):
+
+    def plot_3(self):
 
         # Add a selectbox for choosing between bar and line plot
-        plot_types = ["Bar", "Line"]
-        self.selected_plot_type = st.selectbox("Selectionner une visualisation", plot_types, index=0)
+        #plot_types = ["Bar", "Line"]
+        #selected_plot_type = st.selectbox("Selectionner une visualisation", plot_types, index=0)
+
+        selected_plot_type = st.radio("Type", ["Graphiques en barres", "Graphiques en ligne"], label_visibility="hidden")
 
         # Determine the column to display
         value_column = 'median_value_SQM' if self.normalize_by_area else 'median_value'
@@ -473,13 +430,11 @@ class PropertyApp:
         property_types = dept_data['type_local'].unique()
 
 
-        if self.selected_plot_type == "Bar":
+        if selected_plot_type == "Graphiques en barres":
             cols = st.columns(len(property_types))
 
             for idx, prop_type in enumerate(property_types):
-
-                annual_average_diff, percentage_diff = self.calculate_median_difference_v2(prop_type)
-
+                annual_average_diff, percentage_diff = self.calculate_median_difference(prop_type)
                 with cols[idx]:
                     if annual_average_diff > 0:
                         st.metric(label=prop_type, value=f"+{annual_average_diff:.2f} € / an", delta=f"{percentage_diff:.2f} % depuis 2018")
@@ -487,14 +442,25 @@ class PropertyApp:
                         st.metric(label=prop_type, value=f"{annual_average_diff:.2f} € / an", delta=f"{percentage_diff:.2f} % depuis 2018")
 
                     prop_data = dept_data[dept_data['type_local'] == prop_type]
-
                     fig = px.bar(prop_data, x='Year', y=value_column, 
                                  labels={"Year": "Année", value_column: "Prix médian en €"})
 
                     fig.update_layout(showlegend=False, height=400)
-                    
                     st.plotly_chart(fig, use_container_width=True)
         else:
+
+            cols = st.columns(len(property_types))
+
+            for idx, prop_type in enumerate(property_types):
+
+                annual_average_diff, percentage_diff = self.calculate_median_difference(prop_type)
+
+                with cols[idx]:
+                    if annual_average_diff > 0:
+                        st.metric(label=prop_type, value=f"+{annual_average_diff:.2f} € / an", delta=f"{percentage_diff:.2f} % depuis 2018")
+                    else:
+                        st.metric(label=prop_type, value=f"{annual_average_diff:.2f} € / an", delta=f"{percentage_diff:.2f} % depuis 2018")
+
             fig = px.line(dept_data, 
                           x='Year', 
                           y=value_column, 
@@ -513,18 +479,25 @@ class PropertyApp:
             st.plotly_chart(fig, use_container_width=True)
 
 
-    def plot_5(self):
+    def plot_4(self):
 
         unique_postcodes = self.df_pandas['code_postal'].unique()
                 
         ### Set up the postal code selectbox and update button
         selected_postcode = st.selectbox("Code postal", sorted(unique_postcodes))
 
-        if st.button(f"Actualiser la carte pour {selected_postcode}"):
-            st.session_state.selected_postcode = selected_postcode
-            st.session_state.selected_postcode_title = selected_postcode
-            st.experimental_rerun()
-
+        col1, col2 = st.columns([1,3])
+        with col1:
+            if st.button(f"🌏 Actualiser la carte pour {selected_postcode}"):
+                st.session_state.selected_postcode = selected_postcode
+                st.session_state.selected_postcode_title = selected_postcode
+                st.experimental_rerun()
+        with col2:
+            st.caption("""'Actualiser la carte' est un bouton servant à rafraîchir la carte pour afficher les 
+                       données de votre quartier spécifiquement, au lieu d'afficher tout le département. 
+                       Vous pouvez revenir en arrière en sélectionnant un nouveau département 
+                       dans la barre d'outil.""")
+            
         # Si le bouton est cliqué, mettez à jour la carte avec les données du code postal sélectionné
         filtered_by_postcode = self.df_pandas[self.df_pandas['code_postal'] == selected_postcode]
 
@@ -564,7 +537,7 @@ class PropertyApp:
             # Ajoutez un titre en utilisant st.markdown() avant d'afficher le graphique
             with cols[idx]:
                 # st.markdown(f"{', '.join(property_types)}")
-                st.markdown(f"<div style='text-align: center;'>{', '.join(property_types)}</div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='text-align: center;'>{property_type}</div>", unsafe_allow_html=True)
                 st.plotly_chart(fig, use_container_width=True)
 
 
