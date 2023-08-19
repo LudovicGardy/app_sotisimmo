@@ -18,7 +18,7 @@ import matplotlib.cm as cm
 
 def shorten_titles(title):
     mapping = {
-        "Local industriel. commercial ou assimilé": "local commercial",
+        "Local industriel. commercial ou assimilé": "local industriel",
         # Ajoutez d'autres mappages au besoin
     }
     return mapping.get(title, title) 
@@ -67,7 +67,7 @@ class PropertyApp:
         with col2:
             st.write("# Sotis A.I.")
 
-        st.caption("""Cette application a été imaginée et développée par Ludovic Gardy, Sotis A.I.© 2023. 
+        st.caption("""Cette application a été pensée et créée par Ludovic Gardy, Sotis A.I.© 2023. 
                     Une prochaine version permettra d'afficher en direct les prix des biens pour l'année en cours. 
                     Rendez-vous sur [sotisanalytics.com](https://sotisanalytics.com) pour en savoir plus ou pour me contacter. Bonne visite !""")
 
@@ -190,6 +190,35 @@ class PropertyApp:
 
 
 
+    def calculate_median_difference_v2(self, property_type):
+
+        # Filter the summarized data for the given department
+        dept_data = self.summarized_df_pandas[self.summarized_df_pandas['code_postal'] == self.selected_department]
+        column_to_use = 'median_value_SQM' if self.normalize_by_area else 'median_value'
+
+
+        
+        type_data = dept_data[dept_data['type_local'] == property_type]
+        type_data = type_data.sort_values(by="Year")
+
+        # Calculate the annual differences
+        type_data['annual_diff'] = type_data[column_to_use].diff()
+        
+        # Calculate the average annual difference (excluding NaN values)
+        annual_average_diff = type_data['annual_diff'].dropna().mean()
+        
+        # Calculate percentage difference between 2018 and 2022
+        try:
+            value_2018 = type_data[type_data['Year'] == 2018][column_to_use].values[0]
+            value_2022 = type_data[type_data['Year'] == 2022][column_to_use].values[0]
+            percentage_diff = ((value_2022 - value_2018) / value_2018) * 100
+        except IndexError:
+            percentage_diff = "NA"
+        
+
+        return(annual_average_diff, percentage_diff)
+
+
     def calculate_median_difference(self):
 
         # Filter the summarized data for the given department
@@ -297,7 +326,6 @@ class PropertyApp:
         ### Section 4
         if "Fig. 3" in self.selected_plots:
             st.markdown(f"### Fig 3. Evolution des prix des {self.selected_property_type.lower()}s dans le {self.selected_department} entre 2018 et 2022")
-            self.calculate_median_difference()
             self.plot_4()
             st.divider()
 
@@ -426,6 +454,7 @@ class PropertyApp:
         fig.update_layout(height=600, yaxis_title='Prix médian en €', xaxis_title='Code postal')
         st.plotly_chart(fig, use_container_width=True)
 
+
     def plot_4(self):
 
         # Add a selectbox for choosing between bar and line plot
@@ -437,48 +466,52 @@ class PropertyApp:
 
         # Filter the dataframe by the provided department code
         dept_data = self.summarized_df_pandas[self.summarized_df_pandas['code_postal'] == self.selected_department]
-        dept_data.loc[:, 'type_local'] = dept_data['type_local'].apply(shorten_titles)
+        # dept_data.loc[:, 'type_local'] = dept_data['type_local'].apply(shorten_titles)
 
         # Generate a brighter linear color palette
         years = sorted(dept_data['Year'].unique())
-        color_scale = cm.Blues(np.linspace(0.3, 1, len(years)))  # Using a brighter section of the viridis colormap
-        color_scale_rgb = ["rgb({}, {}, {})".format(int(r*255), int(g*255), int(b*255)) for r, g, b, _ in color_scale]
-        year_color_map = dict(zip(years, color_scale_rgb))
+        property_types = dept_data['type_local'].unique()
+
 
         if self.selected_plot_type == "Bar":
-            fig = go.Figure()
+            cols = st.columns(len(property_types))
 
-            # Data for each year
-            for year in years:
-                year_data = dept_data[dept_data['Year'] == year]
-                fig.add_trace(go.Bar(
-                    x=year_data['type_local'],
-                    y=year_data[value_column],
-                    name=str(year),
-                    marker_color=year_color_map[year]
-                ))
+            for idx, prop_type in enumerate(property_types):
 
-            fig.update_layout(barmode='group')  # Ensure bars are grouped, not stacked
+                annual_average_diff, percentage_diff = self.calculate_median_difference_v2(prop_type)
 
+                with cols[idx]:
+                    if annual_average_diff > 0:
+                        st.metric(label=prop_type, value=f"+{annual_average_diff:.2f} € / an", delta=f"{percentage_diff:.2f} % depuis 2018")
+                    else:
+                        st.metric(label=prop_type, value=f"{annual_average_diff:.2f} € / an", delta=f"{percentage_diff:.2f} % depuis 2018")
+
+                    prop_data = dept_data[dept_data['type_local'] == prop_type]
+
+                    fig = px.bar(prop_data, x='Year', y=value_column, 
+                                 labels={"Year": "Année", value_column: "Prix médian en €"})
+
+                    fig.update_layout(showlegend=False, height=400)
+                    
+                    st.plotly_chart(fig, use_container_width=True)
         else:
-            # Line plot using plotly
             fig = px.line(dept_data, 
-                        x='Year', 
-                        y=value_column, 
-                        color='type_local',
-                        labels={"median_value": "Prix médian en €", "Year": "Année"},
-                        markers=True,
-                        height=600)
+                          x='Year', 
+                          y=value_column, 
+                          color='type_local',
+                          labels={"median_value": "Prix médian en €", "Year": "Année"},
+                          markers=True,
+                          height=600)
 
-        # Update the layout of the plotly figure
-        fig.update_layout(xaxis_title="Type de bien",
-                yaxis_title="Prix médian en €",
-                legend_title="Type de bien",
-                height=600)
-        fig.update_layout(legend_orientation="h", 
-                        legend=dict(y=1.1, x=0.5, xanchor='center', title_text=''))
-        
-        st.plotly_chart(fig, use_container_width=True)
+            fig.update_layout(xaxis_title="Type de bien",
+                              yaxis_title="Prix médian en €",
+                              legend_title="Type de bien",
+                              height=600)
+            fig.update_layout(legend_orientation="h", 
+                            legend=dict(y=1.1, x=0.5, xanchor='center', title_text=''))
+            
+            st.plotly_chart(fig, use_container_width=True)
+
 
     def plot_5(self):
 
@@ -495,7 +528,7 @@ class PropertyApp:
 
         # Si le bouton est cliqué, mettez à jour la carte avec les données du code postal sélectionné
         filtered_by_postcode = self.df_pandas[self.df_pandas['code_postal'] == selected_postcode]
-        filtered_by_postcode.loc[:, 'type_local'] = filtered_by_postcode['type_local'].apply(shorten_titles)
+        # filtered_by_postcode.loc[:, 'type_local'] = filtered_by_postcode['type_local'].apply(shorten_titles)
 
         unique_property_types = filtered_by_postcode['type_local'].unique()
 
