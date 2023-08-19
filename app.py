@@ -525,33 +525,49 @@ class PropertyApp:
             st.session_state.selected_postcode_title = selected_postcode
             st.experimental_rerun()
 
-
         # Si le bouton est cliqué, mettez à jour la carte avec les données du code postal sélectionné
         filtered_by_postcode = self.df_pandas[self.df_pandas['code_postal'] == selected_postcode]
-        # filtered_by_postcode.loc[:, 'type_local'] = filtered_by_postcode['type_local'].apply(shorten_titles)
 
         unique_property_types = filtered_by_postcode['type_local'].unique()
 
-        traces = []
+        # Divisez les types de propriétés en trois listes
+        n = len(unique_property_types) // 3
+        property_types_splits = [unique_property_types[i:i + n] for i in range(0, len(unique_property_types), n)]
 
         color_palette = sns.color_palette('tab10', len(unique_property_types)).as_hex()
         colors = dict(zip(unique_property_types, color_palette))
 
-        for property_type in unique_property_types:
-            subset = filtered_by_postcode[filtered_by_postcode['type_local'] == property_type]
-            traces.append(go.Box(y=subset['valeur_fonciere'], 
-                                name=property_type, 
-                                marker_color=colors[property_type], 
-                                boxpoints='all', 
-                                jitter=0.3, 
-                                pointpos=0, 
-                                marker=dict(opacity=0.5)))
-            
-        fig = go.Figure(data=traces)
-        fig.update_layout(xaxis_title='Type de bien', yaxis_title='Prix médian en €')
-        fig.update_layout(height=600)
-        fig.update_layout(legend_orientation="h", legend=dict(y=1.1, x=0.5, xanchor='center'))
-        st.plotly_chart(fig, use_container_width=True)
+        # Créer trois colonnes
+        cols = st.columns(3)
+
+        for idx, property_types in enumerate(property_types_splits):
+
+            traces = []
+            for property_type in property_types:
+                subset = filtered_by_postcode[filtered_by_postcode['type_local'] == property_type]
+                traces.append(go.Box(y=subset['valeur_fonciere'], 
+                                    name=property_type, 
+                                    marker_color=colors[property_type], 
+                                    boxpoints='all', 
+                                    jitter=0.3, 
+                                    pointpos=0, 
+                                    marker=dict(opacity=0.5)))
+
+            fig = go.Figure(data=traces)
+            fig.update_layout(yaxis_title='Prix médian en €') #xaxis_title='Type de bien'
+            fig.update_layout(height=600)
+            fig.update_layout(legend_orientation="h", legend=dict(y=1.1, x=0.5, xanchor='center'))
+            fig.update_layout(
+                margin=dict(t=20, b=80, l=50, r=50)  # `t` contrôle la marge supérieure
+            )
+
+            # Ajoutez un titre en utilisant st.markdown() avant d'afficher le graphique
+            with cols[idx]:
+                # st.markdown(f"{', '.join(property_types)}")
+                st.markdown(f"<div style='text-align: center;'>{', '.join(property_types)}</div>", unsafe_allow_html=True)
+                st.plotly_chart(fig, use_container_width=True)
+
+
 
 
 if __name__ == "__main__":
