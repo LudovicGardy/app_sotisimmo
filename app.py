@@ -65,7 +65,7 @@ class PropertyApp:
         with col1:
             st.image(logo_path, width=desired_width)
         with col2:
-            st.write("# Sotis A.I. #app")
+            st.write("# Sotis A.I.")
 
         st.caption("""Cette application a été imaginée et développée par Ludovic Gardy, Sotis A.I.© 2023. 
                     Une prochaine version permettra d'afficher en direct les prix des biens pour l'année en cours. 
