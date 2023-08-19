@@ -57,7 +57,7 @@ class PropertyApp:
 
     def create_toolbar(self):
 
-        logo_path = "https://sotisimmo.s3.eu-north-1.amazonaws.com/Sotis_A-A-white.png"
+        logo_path = "https://sotisimmo.s3.eu-north-1.amazonaws.com/Sotis_AI_light.png"
         desired_width = 60
 
         col1, col2 = st.columns([1, 3])
