@@ -286,7 +286,7 @@ class PropertyApp:
             self.selected_mapbox_style = st.selectbox("🌏 Style de carte", mapbox_styles, index=default_map)
 
             colormaps = ["Rainbow", "Portland", "Jet", "Viridis", "Plasma", "Cividis", "Inferno", "Magma", "RdBu"]
-            default_cmap = colormaps.index("Jet")
+            default_cmap = colormaps.index("Rainbow")
             self.selected_colormap = st.selectbox("🎨 Echelle de couleurs", colormaps, index=default_cmap)
 
         with col1:
@@ -336,7 +336,7 @@ class PropertyApp:
                                 color_continuous_scale=self.selected_colormap, 
                                 size_max=15, 
                                 zoom=6, 
-                                opacity=0.5, 
+                                opacity=0.8, 
                                 hover_data=['code_postal', 'valeur_fonciere', 'longitude', 'latitude'])
                         
         # Update the map style
@@ -496,35 +496,30 @@ class PropertyApp:
             st.caption("""**'Actualiser la carte'** sert à rafraîchir la carte, tout en haut de la fenêtre, pour afficher les 
                        données de votre quartier spécifiquement au lieu d'afficher tout le département.""")
             
+
         # Si le bouton est cliqué, mettez à jour la carte avec les données du code postal sélectionné
         filtered_by_postcode = self.df_pandas[self.df_pandas['code_postal'] == selected_postcode]
 
         unique_property_types = filtered_by_postcode['type_local'].unique()
 
-        # Divisez les types de propriétés en trois listes
-        n = len(unique_property_types) // 3
-        property_types_splits = [unique_property_types[i:i + n] for i in range(0, len(unique_property_types), n)]
+        # Créer le nombre approprié de colonnes
+        cols = st.columns(len(unique_property_types))
 
         color_palette = sns.color_palette('tab10', len(unique_property_types)).as_hex()
         colors = dict(zip(unique_property_types, color_palette))
 
-        # Créer trois colonnes
-        cols = st.columns(3)
+        for idx, property_type in enumerate(unique_property_types):
 
-        for idx, property_types in enumerate(property_types_splits):
+            subset = filtered_by_postcode[filtered_by_postcode['type_local'] == property_type]
+            trace = go.Box(y=subset['valeur_fonciere'], 
+                        name=property_type, 
+                        marker_color=colors[property_type], 
+                        boxpoints='all', 
+                        jitter=0.3, 
+                        pointpos=0, 
+                        marker=dict(opacity=0.5))
 
-            traces = []
-            for property_type in property_types:
-                subset = filtered_by_postcode[filtered_by_postcode['type_local'] == property_type]
-                traces.append(go.Box(y=subset['valeur_fonciere'], 
-                                    name=property_type, 
-                                    marker_color=colors[property_type], 
-                                    boxpoints='all', 
-                                    jitter=0.3, 
-                                    pointpos=0, 
-                                    marker=dict(opacity=0.5)))
-
-            fig = go.Figure(data=traces)
+            fig = go.Figure(data=[trace])
             fig.update_layout(yaxis_title='Prix médian en €')
             fig.update_layout(height=600)
             fig.update_layout(legend_orientation="h", legend=dict(y=1.1, x=0.5, xanchor='center'))
@@ -535,7 +530,6 @@ class PropertyApp:
 
             # Ajoutez un titre en utilisant st.markdown() avant d'afficher le graphique
             with cols[idx]:
-                # st.markdown(f"{', '.join(property_types)}")
                 st.markdown(f"<div style='text-align: center;'>{property_type}</div>", unsafe_allow_html=True)
                 st.plotly_chart(fig, use_container_width=True)
 
