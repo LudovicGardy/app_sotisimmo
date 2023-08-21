@@ -8,13 +8,19 @@ import plotly.graph_objects as go
 import seaborn as sns
 import numpy as np
 import matplotlib.cm as cm
+import streamlit.components.v1 as components
 
 # from pyspark.sql import SparkSession
 # from pyspark.sql import functions as F
 # import os
 
 # source env/bin/activate
-##
+
+
+# Include Google Analytics tracking code
+with open("google_analytics.html", "r") as f:
+    html_code = f.read()
+    components.html(html_code, height=0)
 
 def shorten_titles(title):
     mapping = {
