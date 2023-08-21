@@ -1,2 +1,6 @@
 [theme]
 base="dark"
+
+[ui]
+favicon = "https://sotisimmo.s3.eu-north-1.amazonaws.com/Sotis_AI_contrast.ico"
+headHtml = "<title>Sotis Immo.</title>"

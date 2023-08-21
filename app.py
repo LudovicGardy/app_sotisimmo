@@ -57,7 +57,7 @@ class PropertyApp:
 
     def create_toolbar(self):
 
-        logo_path = "https://sotisimmo.s3.eu-north-1.amazonaws.com/Sotis_AI_light_70px.png"
+        logo_path = "https://sotisimmo.s3.eu-north-1.amazonaws.com/Sotis_AI_contrast_240px.png"
         desired_width = 60
 
         col1, col2 = st.columns([1, 3])
@@ -416,7 +416,7 @@ class PropertyApp:
         #plot_types = ["Bar", "Line"]
         #selected_plot_type = st.selectbox("Selectionner une visualisation", plot_types, index=0)
 
-        selected_plot_type = st.radio("Type", ["Graphiques en barres", "Graphiques en ligne"], label_visibility="hidden")
+        selected_plot_type = st.radio("Type", ["Graphique en barres", "Graphique en lignes"], label_visibility="hidden")
 
         # Determine the column to display
         value_column = 'median_value_SQM' if self.normalize_by_area else 'median_value'
@@ -430,7 +430,7 @@ class PropertyApp:
         property_types = dept_data['type_local'].unique()
 
 
-        if selected_plot_type == "Graphiques en barres":
+        if selected_plot_type == "Graphique en barres":
             cols = st.columns(len(property_types))
 
             for idx, prop_type in enumerate(property_types):
