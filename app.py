@@ -17,10 +17,11 @@ import streamlit.components.v1 as components
 # source env/bin/activate
 
 
+### DEMASQUER !
 # Include Google Analytics tracking code
-with open("google_analytics.html", "r") as f:
-    html_code = f.read()
-    components.html(html_code, height=0)
+# with open("templates/google_analytics.html", "r") as f:
+#     html_code = f.read()
+#     components.html(html_code, height=0)
 
 def shorten_titles(title):
     mapping = {
