@@ -41,7 +41,7 @@ class PropertyApp:
     '''
     
     def __init__(self):
-        st.set_page_config(page_title='Sotis Immo', 
+        st.set_page_config(page_title='Sotis Immobilier', 
                            page_icon = "https://sotisimmo.s3.eu-north-1.amazonaws.com/Sotis_AI_contrast.ico", 
                            layout = 'wide',
                            initial_sidebar_state = 'auto')
@@ -73,7 +73,7 @@ class PropertyApp:
 
         st.caption("""Cette application a été pensée et créée par Ludovic Gardy, Sotis A.I.© 2023. 
                     Une prochaine version permettra d'afficher en direct les prix des biens pour l'année en cours. 
-                    Rendez-vous sur [sotisanalytics.com](https://sotisanalytics.com) pour en savoir plus ou pour me contacter. Bonne visite !""")
+                    Pour en savoir plus ou pour me contacter, rendez-vous sur [sotisanalytics.com](https://sotisanalytics.com). Bonne visite !""")
 
         st.divider()
 
@@ -433,9 +433,19 @@ class PropertyApp:
         years = sorted(dept_data['Year'].unique())
         property_types = dept_data['type_local'].unique()
 
+        # Liste des couleurs bleues
+        blue_palette = ['#08519c', '#3182bd', '#6baed6', '#bdd7e7', '#eff3ff']
+
+        # Assurez-vous que le nombre de couleurs dans la palette correspond au nombre d'années
+        if len(blue_palette) != len(years):
+            st.error("Le nombre de couleurs dans la palette ne correspond pas au nombre d'années.")
+            return
 
         if selected_plot_type == "Graphique en barres":
             cols = st.columns(len(property_types))
+
+            # Associez chaque année à une couleur
+            year_to_color = dict(zip(sorted(years), blue_palette))            
 
             for idx, prop_type in enumerate(property_types):
                 annual_average_diff, percentage_diff = self.calculate_median_difference(prop_type)
@@ -446,11 +456,19 @@ class PropertyApp:
                         st.metric(label=prop_type, value=f"{annual_average_diff:.2f} € / an", delta=f"{percentage_diff:.2f} % depuis 2018")
 
                     prop_data = dept_data[dept_data['type_local'] == prop_type]
-                    fig = px.bar(prop_data, x='Year', y=value_column, 
-                                 labels={"Year": "Année", value_column: "Prix médian en €"})
+                    
+                    # Créez une liste pour stocker les tracés
+                    traces = []
+                    for year in prop_data['Year'].unique():
+                        year_data = prop_data[prop_data['Year'] == year]
+                        traces.append(go.Bar(x=year_data['Year'], y=year_data[value_column], name=str(year), marker_color=year_to_color[year]))
+                    
+                    layout = go.Layout(barmode='group', height=400, showlegend=False)
 
-                    fig.update_layout(showlegend=False, height=400)
+                    fig = go.Figure(data=traces, layout=layout)
                     st.plotly_chart(fig, use_container_width=True)
+
+                    
         else:
 
             cols = st.columns(len(property_types))

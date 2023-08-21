@@ -1,3 +1,4 @@
 derivatives/
 env/
 .DS_Store
+.Heroku_logs.png
