@@ -555,8 +555,18 @@ class PropertyApp:
                 st.markdown(f"<div style='text-align: center;'>{property_type}</div>", unsafe_allow_html=True)
                 st.plotly_chart(fig, use_container_width=True)
 
+    # google_analytics_js = """
+    #     <!-- Google tag (gtag.js) -->
+    #     <script async src="https://www.googletagmanager.com/gtag/js?id=G-WQN7B9NLXQ"></script>
+    #     <script>
+    #     window.dataLayer = window.dataLayer || [];
+    #     function gtag(){dataLayer.push(arguments);}
+    #     gtag('js', new Date());
 
-
+    #     gtag('config', 'G-WQN7B9NLXQ');
+    #     </script>
+    #     """
+    #st.components.v1.html(google_analytics_js)
 
 if __name__ == "__main__":
     PropertyApp()

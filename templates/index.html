@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Streamlit Custom Template</title>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-WQN7B9NLXQ"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-WQN7B9NLXQ');
+    </script>
+</head>
+<body>
+  {{app_entry}}
+  <footer>
+    {{strings["footer"]}}
+    {{report_bug_link}}
+  </footer>
+</body>
+</html>
