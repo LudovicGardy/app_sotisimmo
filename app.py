@@ -41,7 +41,11 @@ class PropertyApp:
     '''
     
     def __init__(self):
-        st.set_page_config(layout="wide")
+        st.set_page_config(page_title='Sotis Immo', 
+                           page_icon = "https://sotisimmo.s3.eu-north-1.amazonaws.com/Sotis_AI_contrast.ico", 
+                           layout = 'wide',
+                           initial_sidebar_state = 'auto')
+        
         self.jitter_value = 0
 
         if 'selected_postcode_title' not in st.session_state:
