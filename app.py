@@ -9,6 +9,7 @@ import seaborn as sns
 import numpy as np
 import matplotlib.cm as cm
 import streamlit.components.v1 as components
+from gzip import BadGzipFile
 
 # from pyspark.sql import SparkSession
 # from pyspark.sql import functions as F
@@ -22,16 +23,9 @@ st.set_page_config(page_title='Sotis Immobilier',
                     initial_sidebar_state = 'auto')
 
 # Include Google Analytics tracking code
-with open("templates/google_analytics.html", "r") as f:
+with open("./templates/google_analytics.html", "r") as f:
     html_code = f.read()
     components.html(html_code, height=0)
-
-def shorten_titles(title):
-    mapping = {
-        "Local industriel. commercial ou assimilé": "local industriel",
-        # Ajoutez d'autres mappages au besoin
-    }
-    return mapping.get(title, title) 
 
 class PropertyApp:
     '''
@@ -137,10 +131,16 @@ class PropertyApp:
             buffer = BytesIO(response.content)
 
             ### Load data into a Pandas dataframe
-            df_pandas = pd.read_csv(buffer, compression='gzip', header=0, sep=',', quotechar='"', low_memory=False, 
-                                    usecols=["type_local", "valeur_fonciere", "code_postal", "surface_reelle_bati", "longitude", "latitude"],
-                                    dtype={"code_postal": str})
-            
+            try:
+                df_pandas = pd.read_csv(buffer, compression='gzip', header=0, sep=',', quotechar='"', low_memory=False, 
+                                        usecols=["type_local", "valeur_fonciere", "code_postal", "surface_reelle_bati", "longitude", "latitude"],
+                                        dtype={"code_postal": str})
+            except pd.errors.ParserError:
+                st.error("Ces informations ne sont pas disponibles sur le site du gouvernement, ou elles sont endomagées. Essayez un autre département.")
+            except BadGzipFile:
+                st.error("Ces informations ne sont pas disponibles sur le site du gouvernement, ou elles sont endomagées. Essayez un autre département.")
+
+
             ### Remove rows with missing values
             df_pandas.dropna(inplace=True)
 
@@ -433,7 +433,6 @@ class PropertyApp:
 
         # Filter the dataframe by the provided department code
         dept_data = self.summarized_df_pandas[self.summarized_df_pandas['code_postal'] == self.selected_department]
-        # dept_data.loc[:, 'type_local'] = dept_data['type_local'].apply(shorten_titles)
 
         # Generate a brighter linear color palette
         years = sorted(dept_data['Year'].unique())
@@ -560,19 +559,6 @@ class PropertyApp:
             with cols[idx]:
                 st.markdown(f"<div style='text-align: center;'>{property_type}</div>", unsafe_allow_html=True)
                 st.plotly_chart(fig, use_container_width=True)
-
-    # google_analytics_js = """
-    #     <!-- Google tag (gtag.js) -->
-    #     <script async src="https://www.googletagmanager.com/gtag/js?id=G-WQN7B9NLXQ"></script>
-    #     <script>
-    #     window.dataLayer = window.dataLayer || [];
-    #     function gtag(){dataLayer.push(arguments);}
-    #     gtag('js', new Date());
-
-    #     gtag('config', 'G-WQN7B9NLXQ');
-    #     </script>
-    #     """
-    #st.components.v1.html(google_analytics_js)
 
 if __name__ == "__main__":
     PropertyApp()
