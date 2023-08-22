@@ -10,15 +10,17 @@ import numpy as np
 import matplotlib.cm as cm
 import streamlit.components.v1 as components
 from gzip import BadGzipFile
+import streamlit_analytics
 
 # from pyspark.sql import SparkSession
 # from pyspark.sql import functions as F
 # import os
 
 # source env/bin/activate
+streamlit_analytics.start_tracking()
 
 st.set_page_config(page_title='Sotis Immobilier', 
-                    page_icon = "https://sotisimmo.s3.eu-north-1.amazonaws.com/Sotis_AI_contrast.ico", 
+                    page_icon = "https://sotisimmo.s3.eu-north-1.amazonaws.com/Sotis_AI_contrast_darkbg.ico", 
                     layout = 'wide',
                     initial_sidebar_state = 'auto')
 
@@ -61,7 +63,7 @@ class PropertyApp:
 
     def create_toolbar(self):
 
-        logo_path = "https://sotisimmo.s3.eu-north-1.amazonaws.com/Sotis_AI_contrast_240px.png"
+        logo_path = "https://sotisimmo.s3.eu-north-1.amazonaws.com/Sotis_AI_contrast_darkbg_240px.png"
         desired_width = 60
 
         col1, col2 = st.columns([1, 3])
@@ -559,6 +561,8 @@ class PropertyApp:
             with cols[idx]:
                 st.markdown(f"<div style='text-align: center;'>{property_type}</div>", unsafe_allow_html=True)
                 st.plotly_chart(fig, use_container_width=True)
+
+streamlit_analytics.stop_tracking()
 
 if __name__ == "__main__":
     PropertyApp()

@@ -4,3 +4,4 @@ pandas
 plotly
 Pillow
 seaborn
+streamlit-analytics
