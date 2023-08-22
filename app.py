@@ -10,14 +10,30 @@ import numpy as np
 import matplotlib.cm as cm
 import streamlit.components.v1 as components
 from gzip import BadGzipFile
+
+### Analytics data will be stored in a Google Cloud Firestore database
 import streamlit_analytics
+from google.cloud import firestore
 
 # from pyspark.sql import SparkSession
-# from pyspark.sql import functions as F
+# from pyspark.sql import functions as F 
 # import os
 
 # source env/bin/activate
-streamlit_analytics.start_tracking()
+
+
+# import firebase_admin
+# from firebase_admin import credentials
+
+# cred = credentials.Certificate("path/to/serviceAccountKey.json")
+# firebase_admin.initialize_app(cred)
+
+
+### Analytics data will be stored in a Google Cloud Firestore database
+streamlit_analytics.start_tracking(firestore_key_file="firestore-key.json", firestore_collection_name="sotisimmo_analytics")
+
+# streamlit_analytics.start_tracking()
+# streamlit_analytics.track(firestore_key_file="firestore-key.json", firestore_collection_name="sotisimmo_analytics")
 
 st.set_page_config(page_title='Sotis Immobilier', 
                     page_icon = "https://sotisimmo.s3.eu-north-1.amazonaws.com/Sotis_AI_contrast_darkbg.ico", 
@@ -562,7 +578,9 @@ class PropertyApp:
                 st.markdown(f"<div style='text-align: center;'>{property_type}</div>", unsafe_allow_html=True)
                 st.plotly_chart(fig, use_container_width=True)
 
-streamlit_analytics.stop_tracking()
+streamlit_analytics.stop_tracking(firestore_key_file="firestore-key.json", firestore_collection_name="sotisimmo_analytics")
+
+# streamlit_analytics.stop_tracking()
 
 if __name__ == "__main__":
     PropertyApp()

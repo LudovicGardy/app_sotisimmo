@@ -5,3 +5,4 @@ plotly
 Pillow
 seaborn
 streamlit-analytics
+google-cloud-firestore
