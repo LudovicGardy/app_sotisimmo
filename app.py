@@ -4,39 +4,33 @@ from io import BytesIO
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-# from PIL import Image
 import seaborn as sns
 import numpy as np
 import matplotlib.cm as cm
 import streamlit.components.v1 as components
 from gzip import BadGzipFile
+import platform
 
 ### Analytics data will be stored in a Google Cloud Firestore database
 import streamlit_analytics
 from google.cloud import firestore
 
+# from PIL import Image
 # from pyspark.sql import SparkSession
 # from pyspark.sql import functions as F 
 # import os
 
 # source env/bin/activate
 
-
-# import firebase_admin
-# from firebase_admin import credentials
-
-# cred = credentials.Certificate("path/to/serviceAccountKey.json")
-# firebase_admin.initialize_app(cred)
-
-
-### Analytics data will be stored in a Google Cloud Firestore database
-streamlit_analytics.start_tracking(firestore_key_file="firestore-key.json", firestore_collection_name="sotisimmo_analytics")
+if platform.node() != "MacBookPro-LudovicGardy.local":
+    ### Analytics data will be stored in a Google Cloud Firestore database
+    streamlit_analytics.start_tracking(firestore_key_file="firestore-key.json", firestore_collection_name="sotisimmo_analytics")
 
 # streamlit_analytics.start_tracking()
 # streamlit_analytics.track(firestore_key_file="firestore-key.json", firestore_collection_name="sotisimmo_analytics")
 
 st.set_page_config(page_title='Sotis Immobilier', 
-                    page_icon = "https://sotisimmo.s3.eu-north-1.amazonaws.com/Sotis_AI_contrast_darkbg.ico", 
+                    page_icon = "https://sotisimmo.s3.eu-north-1.amazonaws.com/Sotis_AI_pure_240px.ico", 
                     layout = 'wide',
                     initial_sidebar_state = 'auto')
 
@@ -79,7 +73,7 @@ class PropertyApp:
 
     def create_toolbar(self):
 
-        logo_path = "https://sotisimmo.s3.eu-north-1.amazonaws.com/Sotis_AI_contrast_darkbg_240px.png"
+        logo_path = "https://sotisimmo.s3.eu-north-1.amazonaws.com/Sotis_AI_pure_darkbg_240px.png"
         desired_width = 60
 
         col1, col2 = st.columns([1, 3])
@@ -578,9 +572,9 @@ class PropertyApp:
                 st.markdown(f"<div style='text-align: center;'>{property_type}</div>", unsafe_allow_html=True)
                 st.plotly_chart(fig, use_container_width=True)
 
-streamlit_analytics.stop_tracking(firestore_key_file="firestore-key.json", firestore_collection_name="sotisimmo_analytics")
-
-# streamlit_analytics.stop_tracking()
+if platform.node() != "MacBookPro-LudovicGardy.local":
+    streamlit_analytics.stop_tracking(firestore_key_file="firestore-key.json", firestore_collection_name="sotisimmo_analytics")
+    # streamlit_analytics.stop_tracking()
 
 if __name__ == "__main__":
     PropertyApp()
