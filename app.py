@@ -10,35 +10,82 @@ import matplotlib.cm as cm
 import streamlit.components.v1 as components
 from gzip import BadGzipFile
 import platform
+import os
+from tempfile import NamedTemporaryFile
+import json
 
 ### Analytics data will be stored in a Google Cloud Firestore database
 import streamlit_analytics
 from google.cloud import firestore
 
+from dotenv import load_dotenv, dotenv_values
+
+try:
+    # Chargez les variables d'environnement à partir du fichier .env
+    config = dotenv_values(".env")
+    cred_dict = {
+    "type": "service_account",
+    "project_id": config['PROJECT_ID'],
+    "private_key_id": config['PRIVATE_KEY_ID'],
+    "private_key": f"-----BEGIN PRIVATE KEY-----\n{config['PRIVATE_KEY']}\nQRvUMBhovN3NVKFCWGI242MTctN8p5VTnAgbMWEaoCuajuZAiqZIr0ekSYMrPY9U\nK8sQF259Mm10v5AMCyNhFkfB3Hb9Um18kxTlzh8zgHilznxTCY62/fgvcSGE2mPM\nPd5yHtXGWlmnbRKQrT1v0uTlTOSentJRedfa5qDbe4mOyWAVUlSnB39xG/3bxen5\nSWBj2x2ReeK2YnSL+xHkyYk9sDlzgw4ODcdPpM2gHprt9dqdkKxT+y0AiJJz/Hu/\nw53kKPBkp+Cf/4XJtPOafe4ncydD5Tj1XS9rKGvyOgOMV3UrDjh0To90FcGJNCL5\nxXyn94onAgMBAAECggEABlYbkhpz4sKHIcTWIAfPkHqNqqr90NCajInhMDPmeDP3\nNJI+MaVJzTLFGduBXfmd8tUto8ILE04MHyMyy9MluZ9zDTLfiUN/h2zXL+RlG/tt\nUW6QoIPFmVh7Z1PBS2c1fb4nQffVBEPxbh24cPBdp4LlaTnpxxWzUuCmI3rHqXHm\nVOoW66TTdn2fk8hhjJaYzCulL6/pOuRMMWCu3xvt+VeVHlpdq3J6CAxImAvHedMI\nxzfXd/Lcialv0geN1TI6EqUfDD7D1ZZqsrksNZM1inmUwK48LrSSYZjkm51voYzf\nFD7y5qKU8hq/FAV7flbh2wuAtSLubETGRKHLjpXIeQKBgQD7zEMNLDSZJymextbt\nUrk6Jh1v73kFFXDJv/CTEybO+3BTIBcJVjzXAG0mF7NERlUy6jiHee9aISXoTm8R\necNo+n1AngBz7bCTWRhT/eblSLVSMN2hwwgdQuqWpJZWFO7ZtR349K/VX0zBFPtF\n98Asgnmqg8X9X4s7JSzle1gWgwKBgQDvNF1Aft5AqP6CAF/oP7+g/eBvnxDtDg1R\nS6Pl24nxSMtFVa4wfq2gM10E98971Vq7VsxNWqo2W3CT85jKe0D3zRAGlZ0jjMl5\nIhUt8V2Vq6q6MvEIAVgesZtvOXb2K9f3h1BOdIP2WPRXGJDnuGY9j0u4UWW7SUAb\naBhYdfcMjQKBgC8lZNyfjU2r3ogjNPUEyzfPES33SdKg3Bh6fuIa8OZKgBKgbI/L\n/OJI6yb5wxAilytMXb9IHn/iuwVPQk6kXOlYFYG20+Dg/XHpebuoS8Zcoc685ZK3\nQNqxv9jrAlcl3j8XQYBu2El8aZOxiQblx67N01gRCk5RyHEPmeNx/+FfAoGARfYq\n0BJLLt4+kgdKBcOfaJbYbc04Rh02B/D3nuL3FXsU+NJ2f/iND632Jt3T8YQVZXWd\ni4JZBkz4QE2fApnKBrATX9mifCNRSfyN9UIC/SOYa506ofzCqTeJHp7QDHAGWn9Z\nHZk2f3bFADRPLXbhcF/Y5a/o8T4bYeiwNi9KcoECgYBGJ5NmQVy6ts19DpyWzK2+\nK8mG+vCx1rLfhwNW8ssrQsa+k9CE+krj/LflxfkHzQcOVoTgRxbHxT/TgBYCuoyE\nhnQb2L0bA/tayaMG2mz6rfBt6spliAaLl+4bvu6BWP4KY0jqg+mUsyrqumHNVgSp\nqqoHxy8uVFxNcMOw8AStmg==\n-----END PRIVATE KEY-----\n",
+    "client_email": config['CLIENT_EMAIL'],
+    "client_id": config['CLIENT_ID'],
+    "auth_uri": config['AUTH_URI'],
+    "token_uri": config['TOKEN_URI'],
+    "auth_provider_x509_cert_url": config['AUTH_PROVIDER_X509_CERT_URL'],
+    "client_x509_cert_url": config['CLIENT_X509_CERT_URL']
+    }
+except Exception as e:
+    # Récupérez les valeurs à partir des variables d'environnement
+    print("No file .env was found :", str(e))
+    print("Searching in OS environment variables...")
+    # load_dotenv()
+    cred_dict = {
+        "type": "service_account",
+        "project_id": os.environ.get('PROJECT_ID'),
+        "private_key_id": os.environ.get('PRIVATE_KEY_ID'),
+        "private_key": f"-----BEGIN PRIVATE KEY-----\n{os.environ.get('PRIVATE_KEY')}\nQRvUMBhovN3NVKFCWGI242MTctN8p5VTnAgbMWEaoCuajuZAiqZIr0ekSYMrPY9U\nK8sQF259Mm10v5AMCyNhFkfB3Hb9Um18kxTlzh8zgHilznxTCY62/fgvcSGE2mPM\nPd5yHtXGWlmnbRKQrT1v0uTlTOSentJRedfa5qDbe4mOyWAVUlSnB39xG/3bxen5\nSWBj2x2ReeK2YnSL+xHkyYk9sDlzgw4ODcdPpM2gHprt9dqdkKxT+y0AiJJz/Hu/\nw53kKPBkp+Cf/4XJtPOafe4ncydD5Tj1XS9rKGvyOgOMV3UrDjh0To90FcGJNCL5\nxXyn94onAgMBAAECggEABlYbkhpz4sKHIcTWIAfPkHqNqqr90NCajInhMDPmeDP3\nNJI+MaVJzTLFGduBXfmd8tUto8ILE04MHyMyy9MluZ9zDTLfiUN/h2zXL+RlG/tt\nUW6QoIPFmVh7Z1PBS2c1fb4nQffVBEPxbh24cPBdp4LlaTnpxxWzUuCmI3rHqXHm\nVOoW66TTdn2fk8hhjJaYzCulL6/pOuRMMWCu3xvt+VeVHlpdq3J6CAxImAvHedMI\nxzfXd/Lcialv0geN1TI6EqUfDD7D1ZZqsrksNZM1inmUwK48LrSSYZjkm51voYzf\nFD7y5qKU8hq/FAV7flbh2wuAtSLubETGRKHLjpXIeQKBgQD7zEMNLDSZJymextbt\nUrk6Jh1v73kFFXDJv/CTEybO+3BTIBcJVjzXAG0mF7NERlUy6jiHee9aISXoTm8R\necNo+n1AngBz7bCTWRhT/eblSLVSMN2hwwgdQuqWpJZWFO7ZtR349K/VX0zBFPtF\n98Asgnmqg8X9X4s7JSzle1gWgwKBgQDvNF1Aft5AqP6CAF/oP7+g/eBvnxDtDg1R\nS6Pl24nxSMtFVa4wfq2gM10E98971Vq7VsxNWqo2W3CT85jKe0D3zRAGlZ0jjMl5\nIhUt8V2Vq6q6MvEIAVgesZtvOXb2K9f3h1BOdIP2WPRXGJDnuGY9j0u4UWW7SUAb\naBhYdfcMjQKBgC8lZNyfjU2r3ogjNPUEyzfPES33SdKg3Bh6fuIa8OZKgBKgbI/L\n/OJI6yb5wxAilytMXb9IHn/iuwVPQk6kXOlYFYG20+Dg/XHpebuoS8Zcoc685ZK3\nQNqxv9jrAlcl3j8XQYBu2El8aZOxiQblx67N01gRCk5RyHEPmeNx/+FfAoGARfYq\n0BJLLt4+kgdKBcOfaJbYbc04Rh02B/D3nuL3FXsU+NJ2f/iND632Jt3T8YQVZXWd\ni4JZBkz4QE2fApnKBrATX9mifCNRSfyN9UIC/SOYa506ofzCqTeJHp7QDHAGWn9Z\nHZk2f3bFADRPLXbhcF/Y5a/o8T4bYeiwNi9KcoECgYBGJ5NmQVy6ts19DpyWzK2+\nK8mG+vCx1rLfhwNW8ssrQsa+k9CE+krj/LflxfkHzQcOVoTgRxbHxT/TgBYCuoyE\nhnQb2L0bA/tayaMG2mz6rfBt6spliAaLl+4bvu6BWP4KY0jqg+mUsyrqumHNVgSp\nqqoHxy8uVFxNcMOw8AStmg==\n-----END PRIVATE KEY-----\n",
+        "client_email": os.environ.get('CLIENT_EMAIL'),
+        "client_id": os.environ.get('CLIENT_ID'),
+        "auth_uri": os.environ.get('AUTH_URI'),
+        "token_uri": os.environ.get('TOKEN_URI'),
+        "auth_provider_x509_cert_url": os.environ.get('AUTH_PROVIDER_X509_CERT_URL'),
+        "client_x509_cert_url": os.environ.get('CLIENT_X509_CERT_URL')
+    }
+
+### Archives
 # from PIL import Image
 # from pyspark.sql import SparkSession
 # from pyspark.sql import functions as F 
-# import os
 
+### Activate python environment
 # source env/bin/activate
 
-if platform.node() != "MacBookPro-LudovicGardy.local":
-    ### Analytics data will be stored in a Google Cloud Firestore database
-    streamlit_analytics.start_tracking(firestore_key_file="firestore-key.json", firestore_collection_name="sotisimmo_analytics")
+### Include Google Analytics tracking code (not working)
+# with open("./templates/google_analytics.html", "r") as f:
+#     html_code = f.read()
+#     components.html(html_code, height=0)
 
-# streamlit_analytics.start_tracking()
-# streamlit_analytics.track(firestore_key_file="firestore-key.json", firestore_collection_name="sotisimmo_analytics")
-
+### Set page config
 st.set_page_config(page_title='Sotis Immobilier', 
-                    page_icon = "https://sotisimmo.s3.eu-north-1.amazonaws.com/Sotis_AI_pure_240px.ico", 
+                    page_icon = "https://sotisimmo.s3.eu-north-1.amazonaws.com/Sotis_AI_pure_darkbg_240px.ico",  
                     layout = 'wide',
                     initial_sidebar_state = 'auto')
 
-# Include Google Analytics tracking code
-with open("./templates/google_analytics.html", "r") as f:
-    html_code = f.read()
-    components.html(html_code, height=0)
+### Track the app with streamlit-analytics
+### Analytics data will be stored in a Google Cloud Firestore database
+if True:#platform.node() != "MacBookPro-LudovicGardy.local":
+    ### Secure way to store the firestore keys and provide them to start_tracking
+    import json,tempfile
+    tfile = tempfile.NamedTemporaryFile(mode="w+")
+    json.dump(cred_dict, tfile)
+    tfile.flush()
+    streamlit_analytics.start_tracking(firestore_key_file=tfile.name, firestore_collection_name="sotisimmo_analytics")
 
+    # streamlit_analytics.start_tracking()
+    # streamlit_analytics.track(firestore_key_file="firestore-key.json", firestore_collection_name="sotisimmo_analytics")
+
+### App
 class PropertyApp:
     '''
     This class creates a Streamlit app that displays the average price of real estate properties in France, by department.
@@ -572,8 +619,8 @@ class PropertyApp:
                 st.markdown(f"<div style='text-align: center;'>{property_type}</div>", unsafe_allow_html=True)
                 st.plotly_chart(fig, use_container_width=True)
 
-if platform.node() != "MacBookPro-LudovicGardy.local":
-    streamlit_analytics.stop_tracking(firestore_key_file="firestore-key.json", firestore_collection_name="sotisimmo_analytics")
+if True:#platform.node() != "MacBookPro-LudovicGardy.local":
+    streamlit_analytics.stop_tracking(firestore_key_file=tfile.name, firestore_collection_name="sotisimmo_analytics")
     # streamlit_analytics.stop_tracking()
 
 if __name__ == "__main__":
