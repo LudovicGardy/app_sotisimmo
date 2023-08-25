@@ -1,7 +1,6 @@
 derivatives/
 notebooks/
 env/
-*.md
 .DS_Store
 .Heroku_logs.png
 .DEPLOY.md

@@ -74,7 +74,7 @@ st.set_page_config(page_title='Sotis Immobilier',
 
 ### Track the app with streamlit-analytics
 ### Analytics data will be stored in a Google Cloud Firestore database
-if True:#platform.node() != "MacBookPro-LudovicGardy.local":
+if platform.node() != "MacBookPro-LudovicGardy.local":
     ### Secure way to store the firestore keys and provide them to start_tracking
     import json,tempfile
     tfile = tempfile.NamedTemporaryFile(mode="w+")
@@ -132,7 +132,7 @@ class PropertyApp:
 
         st.caption("""Cette application a été pensée et créée par Ludovic Gardy, Sotis A.I.© 2023. 
                     Une prochaine version permettra d'afficher en direct les prix des biens pour l'année en cours. 
-                    Pour en savoir plus ou pour me contacter, rendez-vous sur [sotisanalytics.com](https://sotisanalytics.com). Bonne visite !""")
+                    Pour en savoir plus ou pour me contacter, rendez-vous sur [sotisanalytics.com](https://www.sotisanalytics.com). Bonne visite !""")
 
         st.divider()
 
@@ -619,7 +619,7 @@ class PropertyApp:
                 st.markdown(f"<div style='text-align: center;'>{property_type}</div>", unsafe_allow_html=True)
                 st.plotly_chart(fig, use_container_width=True)
 
-if True:#platform.node() != "MacBookPro-LudovicGardy.local":
+if platform.node() != "MacBookPro-LudovicGardy.local":
     streamlit_analytics.stop_tracking(firestore_key_file=tfile.name, firestore_collection_name="sotisimmo_analytics")
     # streamlit_analytics.stop_tracking()
 
