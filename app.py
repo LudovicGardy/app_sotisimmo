@@ -70,7 +70,7 @@ except Exception as e:
 st.set_page_config(page_title='Sotis Immobilier', 
                     page_icon = "https://sotisimmo.s3.eu-north-1.amazonaws.com/Sotis_AI_pure_darkbg_240px.ico",  
                     layout = 'wide',
-                    initial_sidebar_state = 'auto')
+                    initial_sidebar_state = 'expanded')
 
 ### Track the app with streamlit-analytics
 ### Analytics data will be stored in a Google Cloud Firestore database
@@ -106,6 +106,7 @@ class PropertyApp:
     def __init__(self):
         
         self.jitter_value = 0
+        self.data_loaded = True  # Variable pour suivre si les données ont été chargées avec succès
 
         if 'selected_postcode_title' not in st.session_state:
             st.session_state.selected_postcode_title = None
@@ -117,6 +118,7 @@ class PropertyApp:
             self.load_data_and_initialize_params()
 
         self.create_plots()
+
 
     def create_toolbar(self):
 
@@ -181,36 +183,50 @@ class PropertyApp:
             Load data from the French open data portal.
             @st.cache_data is used to cache the data, so that it is not reloaded every time the user changes a parameter.
             '''
+            df_pandas = None  # Initialisez df_pandas à None ou pd.DataFrame()
 
-            ### Download data from the French open data portal
-            url = f"https://files.data.gouv.fr/geo-dvf/latest/csv/{year}/departements/{selected_dept}.csv.gz"
-            response = requests.get(url)
-
-            ### Store data in a buffer
-            buffer = BytesIO(response.content)
-
-            ### Load data into a Pandas dataframe
+            # Data from government are available only for the years 2018-2022
             try:
-                df_pandas = pd.read_csv(buffer, compression='gzip', header=0, sep=',', quotechar='"', low_memory=False, 
-                                        usecols=["type_local", "valeur_fonciere", "code_postal", "surface_reelle_bati", "longitude", "latitude"],
-                                        dtype={"code_postal": str})
-            except pd.errors.ParserError:
-                st.error("Ces informations ne sont pas disponibles sur le site du gouvernement, ou elles sont endomagées. Essayez un autre département.")
-            except BadGzipFile:
-                st.error("Ces informations ne sont pas disponibles sur le site du gouvernement, ou elles sont endomagées. Essayez un autre département.")
+                if int(year) < 2023:
+                    ### Download data from the French open data portal
+                    url = f"https://files.data.gouv.fr/geo-dvf/latest/csv/{year}/departements/{selected_dept}.csv.gz"
+                    response = requests.get(url)
 
+                    ### Store data in a buffer
+                    buffer = BytesIO(response.content)
 
-            ### Remove rows with missing values
-            df_pandas.dropna(inplace=True)
+                    ### Load data into a Pandas dataframe
+                    df_pandas = pd.read_csv(buffer, compression='gzip', header=0, sep=',', quotechar='"', low_memory=False, 
+                                            usecols=["type_local", "valeur_fonciere", "code_postal", "surface_reelle_bati", "longitude", "latitude"],
+                                            dtype={"code_postal": str})
+                else:
+                    csv_path = f"https://sotisimmo.s3.eu-north-1.amazonaws.com/2023_merged/departements/{self.selected_department}.csv.gz"
+                    df_pandas = pd.read_csv(csv_path, compression='gzip', header=0, sep=',', quotechar='"', low_memory=False, 
+                                                usecols=["type_local", "valeur_fonciere", "code_postal", "surface_reelle_bati", "longitude", "latitude"],
+                                                dtype={"code_postal": str})
 
-            ### Remove duplicates based on the columns "valeur_fonciere", "longitude", and "latitude"
-            df_pandas.drop_duplicates(subset=["valeur_fonciere", "longitude", "latitude"], inplace=True, keep='last')
+                ### Remove rows with missing values
+                df_pandas.dropna(inplace=True)
 
-            ### Sort by postal code
-            df_pandas = df_pandas.sort_values("code_postal")
+                ### Remove duplicates based on the columns "valeur_fonciere", "longitude", and "latitude"
+                df_pandas.drop_duplicates(subset=["valeur_fonciere", "longitude", "latitude"], inplace=True, keep='last')
 
-            ### Add leading zeros to postal code
-            df_pandas["code_postal"] = df_pandas["code_postal"].astype(str).str.zfill(5)
+                ### Sort by postal code
+                df_pandas = df_pandas.sort_values("code_postal")
+
+                ### Add leading zeros to postal code
+                df_pandas["code_postal"] = df_pandas["code_postal"].astype(float).astype(int).astype(str).str.zfill(5)
+
+                print("")
+                print(df_pandas["code_postal"])
+                print("")
+            except Exception as e:
+                if df_pandas is None:
+                    st.sidebar.error("Pas d'information disponible pour le département {} en {}. Sélectionnez une autre configuration.".format(self.selected_department, self.selected_year))
+                    st.session_state.data_load_error = True
+                # st.warning(e)
+                st.warning("Oups, un petit bug ici.")
+                print(e)
 
             return df_pandas
 
@@ -234,30 +250,33 @@ class PropertyApp:
         st.session_state.previous_selected_department = self.selected_department
 
         ### Set up the year selectbox
-        years = [str(y) for y in range(2018, 2023)]
-        default_year = years.index("2022")
-        self.selected_year = st.selectbox("Aannée", years, index=default_year)
+        years = ["Vendus en 2018", "Vendus en 2019", "Vendus en 2020", "Vendus en 2021", "Vendus en 2022", "En vente en 2023"]
+        default_year = years.index("Vendus en 2022")
+        self.selected_year = st.selectbox("Aannée", years, index=default_year).split(" ")[-1]
 
         ### Load data
-        self.df_pandas = load_data(self.selected_department, self.selected_year).copy()
+        self.df_pandas = load_data(self.selected_department, self.selected_year)
 
-        ### Set up the property type selectbox
-        property_types = sorted(self.df_pandas['type_local'].unique())
-        selectbox_key = f"local_type_{self.selected_department}_{self.selected_year}"
-        self.selected_property_type = st.selectbox("Type de bien", property_types, key=selectbox_key)
+        if not self.df_pandas is None:
 
-        ### Set up the normalization checkbox
-        self.normalize_by_area = st.checkbox("Prix au m²", True)
-        
-        if self.normalize_by_area:
-            self.df_pandas['valeur_fonciere'] = self.df_pandas['valeur_fonciere'] / self.df_pandas['surface_reelle_bati']
+            ### Set up a copy of the dataframe
+            self.df_pandas = self.df_pandas.copy()
 
-        # Ajoutez ceci après les autres éléments dans la barre latérale
-        self.selected_plots = st.multiselect("Supprimer / ajouter des graphiques", 
-                                            ["Carte", "Fig. 1", "Fig. 2", "Fig. 3", "Fig. 4"],
-                                            ["Carte", "Fig. 1", "Fig. 2", "Fig. 3", "Fig. 4"])
+            ### Set up the property type selectbox
+            property_types = sorted(self.df_pandas['type_local'].unique())
+            selectbox_key = f"local_type_{self.selected_department}_{self.selected_year}"
+            self.selected_property_type = st.selectbox("Type de bien", property_types, key=selectbox_key)
 
+            ### Set up the normalization checkbox
+            self.normalize_by_area = st.checkbox("Prix au m²", True)
+            
+            if self.normalize_by_area:
+                self.df_pandas['valeur_fonciere'] = self.df_pandas['valeur_fonciere'] / self.df_pandas['surface_reelle_bati']
 
+            # Ajoutez ceci après les autres éléments dans la barre latérale
+            self.selected_plots = st.multiselect("Supprimer / ajouter des graphiques", 
+                                                ["Carte", "Fig. 1", "Fig. 2", "Fig. 3", "Fig. 4"],
+                                                ["Carte", "Fig. 1", "Fig. 2", "Fig. 3", "Fig. 4"])
 
     def calculate_median_difference(self, property_type):
 
@@ -300,6 +319,10 @@ class PropertyApp:
         Grphical representation
         '''
 
+        if self.df_pandas is None:
+            st.error("Pas d'information disponible pour le département {} en {}. Sélectionnez une autre configuration.".format(self.selected_department, self.selected_year))
+            return
+
         # Set the title of the section
         # st.markdown('# Sotis A.I. Immobilier')
         st.markdown('## Visualisez les prix de l\'immobilier en France')
@@ -312,23 +335,35 @@ class PropertyApp:
 
         ### Section 1
         if "Carte" in self.selected_plots:
+            # Afficher l'alerte si l'année sélectionnée est 2023
+            if "2023" in self.selected_year:
+                st.warning("Attention : Les données tarifaires pour l'année 2023 proviennent directement d'agences immobilières et sont actualisées en continu. Il est important de noter que ces informations diffèrent des données gouvernementales disponibles pour les années antérieures (2018 à 2022). Par conséquent, nous vous recommandons d'exercer une vigilance accrue lors de leur interprétation. De plus, veuillez noter que la précision des localisations géographiques pour les biens immobiliers de 2023 est moins fiable que pour les années précédentes.")
+
             if 'selected_postcode_title' in st.session_state and st.session_state.selected_postcode_title:
-                map_title = f"Distribution des prix pour les {self.selected_property_type.lower()}s dans le {st.session_state.selected_postcode_title} en {self.selected_year}"
+                map_title = f"Distribution des prix médians pour les {self.selected_property_type.lower()}s dans le {st.session_state.selected_postcode_title} en {self.selected_year}"
             else:
-                map_title = f"Distribution des prix pour les {self.selected_property_type.lower()}s dans le {self.selected_department} en {self.selected_year}"
+                map_title = f"Distribution des prix médians pour les {self.selected_property_type.lower()}s dans le {self.selected_department} en {self.selected_year}"
             st.markdown(f"### {map_title}")
             self.plot_map()
             st.divider()
 
         ### Section 2
         if "Fig. 1" in self.selected_plots:
-            st.markdown(f"### Fig 1. Distribution des prix dans le {self.selected_department} en {self.selected_year}")
+            # Afficher l'alerte si l'année sélectionnée est 2023
+            if "2023" in self.selected_year:
+                st.warning("Attention : Les données tarifaires pour l'année 2023 proviennent directement d'agences immobilières et sont actualisées en continu. Il est important de noter que ces informations diffèrent des données gouvernementales disponibles pour les années antérieures (2018 à 2022). Par conséquent, nous vous recommandons d'exercer une vigilance accrue lors de leur interprétation. De plus, veuillez noter que la précision des localisations géographiques pour les biens immobiliers de 2023 est moins fiable que pour les années précédentes.")
+
+            st.markdown(f"### Fig 1. Distribution des prix médians dans le {self.selected_department} en {self.selected_year}")
             self.plot_1()
             st.divider()
 
         ### Section 3
         if "Fig. 2" in self.selected_plots:
-            st.markdown(f"### Fig 2. Distribution des prix pour les {self.selected_property_type.lower()}s dans le {self.selected_department} en {self.selected_year}")
+            # Afficher l'alerte si l'année sélectionnée est 2023
+            if "2023" in self.selected_year:
+                st.warning("Attention : Les données tarifaires pour l'année 2023 proviennent directement d'agences immobilières et sont actualisées en continu. Il est important de noter que ces informations diffèrent des données gouvernementales disponibles pour les années antérieures (2018 à 2022). Par conséquent, nous vous recommandons d'exercer une vigilance accrue lors de leur interprétation. De plus, veuillez noter que la précision des localisations géographiques pour les biens immobiliers de 2023 est moins fiable que pour les années précédentes.")
+
+            st.markdown(f"### Fig 2. Distribution des prix médians pour les {self.selected_property_type.lower()}s dans le {self.selected_department} en {self.selected_year}")
             st.markdown("""Les nombres au-dessus des barres représentent le nombre de biens par code postal. 
                         Ils fournissent un contexte sur le volume des ventes pour chaque zone.""")
             self.plot_2()
@@ -336,13 +371,21 @@ class PropertyApp:
 
         ### Section 4
         if "Fig. 3" in self.selected_plots:
-            st.markdown(f"### Fig 3. Evolution des prix des {self.selected_property_type.lower()}s dans le {self.selected_department} entre 2018 et 2022")
+            # Afficher l'alerte si l'année sélectionnée est 2023
+            if "2023" in self.selected_year:
+                st.warning("Attention : Les données tarifaires pour l'année 2023 proviennent directement d'agences immobilières et sont actualisées en continu. Il est important de noter que ces informations diffèrent des données gouvernementales disponibles pour les années antérieures (2018 à 2022). Par conséquent, nous vous recommandons d'exercer une vigilance accrue lors de leur interprétation. De plus, veuillez noter que la précision des localisations géographiques pour les biens immobiliers de 2023 est moins fiable que pour les années précédentes.")
+
+            st.markdown(f"### Fig 3. Evolution des prix médians des {self.selected_property_type.lower()}s dans le {self.selected_department} entre 2018 et 2022")
             self.plot_3()
             st.divider()
 
         ### Section 5
         if "Fig. 4" in self.selected_plots:
-            st.markdown(f"### Fig 4. Distribution des prix dans votre quartier en {self.selected_year}")
+            # Afficher l'alerte si l'année sélectionnée est 2023
+            if "2023" in self.selected_year:
+                st.warning("Attention : Les données tarifaires pour l'année 2023 proviennent directement d'agences immobilières et sont actualisées en continu. Il est important de noter que ces informations diffèrent des données gouvernementales disponibles pour les années antérieures (2018 à 2022). Par conséquent, nous vous recommandons d'exercer une vigilance accrue lors de leur interprétation. De plus, veuillez noter que la précision des localisations géographiques pour les biens immobiliers de 2023 est moins fiable que pour les années précédentes.")
+
+            st.markdown(f"### Fig 4. Distribution des prix unitaires (par bien) dans votre quartier en {self.selected_year}")
             self.plot_4()
 
     def plot_map(self):
@@ -387,6 +430,8 @@ class PropertyApp:
 
         # (Optional) Jittering : add a small random value to the coordinates to avoid overlapping markers
         self.jitter_value = 0.001 if self.use_jitter else 0
+        filtered_df['longitude'] = filtered_df['longitude'].astype(float)
+        filtered_df['latitude'] = filtered_df['latitude'].astype(float)
         filtered_df.loc[:, 'latitude'] = filtered_df['latitude'] + np.random.uniform(-self.jitter_value, self.jitter_value, size=len(filtered_df))
         filtered_df.loc[:, 'longitude'] = filtered_df['longitude'] + np.random.uniform(-self.jitter_value, self.jitter_value, size=len(filtered_df))
 
@@ -618,6 +663,22 @@ class PropertyApp:
             with cols[idx]:
                 st.markdown(f"<div style='text-align: center;'>{property_type}</div>", unsafe_allow_html=True)
                 st.plotly_chart(fig, use_container_width=True)
+
+                # # Ajouter un bouton pour afficher le DataFrame
+                # if st.button(f"Afficher les données pour {property_type}"):
+                    
+                #     # Renommer les colonnes
+                #     subset = subset.rename(columns={
+                #         'code_postal': 'Code Postal',
+                #         'type_local': 'Type',
+                #         'valeur_fonciere': 'Valeur (€)',
+                #         'surface_reelle_bati': 'Surface (m²)'
+                #     })
+                #     selected_columns = ['Code Postal', 'Type', 'Valeur (€)', 'Surface (m²)']
+                #     subset = subset[selected_columns]
+
+                #     # Afficher le DataFrame dans Streamlit
+                #     st.dataframe(subset, hide_index=True)
 
 if platform.node() != "MacBookPro-LudovicGardy.local":
     streamlit_analytics.stop_tracking(firestore_key_file=tfile.name, firestore_collection_name="sotisimmo_analytics")
