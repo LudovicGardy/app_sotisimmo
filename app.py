@@ -133,8 +133,8 @@ class PropertyApp:
             st.write("# Sotis A.I.")
 
         st.caption("""Cette application a été pensée et créée par Ludovic Gardy, Sotis A.I.© 2023. 
-                    Une prochaine version permettra d'afficher en direct les prix des biens pour l'année en cours. 
-                    Pour en savoir plus ou pour me contacter, rendez-vous sur [sotisanalytics.com](https://www.sotisanalytics.com). Bonne visite !""")
+                    Pour en savoir plus ou pour me contacter, rendez-vous sur [sotisanalytics.com](https://www.sotisanalytics.com). 
+                    Bonne visite !""")
 
         st.divider()
 
