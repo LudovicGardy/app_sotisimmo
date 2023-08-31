@@ -132,9 +132,16 @@ class PropertyApp:
         with col2:
             st.write("# Sotis A.I.")
 
-        st.caption("""Cette application a été pensée et créée par Ludovic Gardy, Sotis A.I.© 2023. 
-                    Pour en savoir plus ou pour me contacter, rendez-vous sur [sotisanalytics.com](https://www.sotisanalytics.com). 
+        st.caption("""Cette application a été designée par Ludovic Gardy, Sotis A.I.© 2023, pour répondre à un besoin de lecture plus claire du marché immobilier. 
+                    Pour en savoir plus, signaler un problème, une idée ou pour me contacter, rendez-vous sur [sotisanalytics.com](https://www.sotisanalytics.com). 
                     Bonne visite !""")
+
+        # st.caption("""Cette application a été designée par Ludovic Gardy (L.G.), pour répondre à un besoin personnel 
+        #         de lecture plus claire du marcher immobilier. Interessé par la dynamique récente du marché de l'immobilier,
+        #         j'ai créé cette application que je décide de partager avec vous. Puiss-t-elle vous être utile ! Data scientist, 
+        #         je suis aussi le fondateur de Sotis A.I., une société spécialisée dans la conception 
+        #         de solutions technologiques tournées autour de l'analyse des données et de l'intelligence artificielle. 
+        #         Pour en savoir plus, visitez notre site web : [https://www.sotisanalytics.com](https://www.sotisanalytics.com)""")
 
         st.divider()
 
@@ -327,11 +334,18 @@ class PropertyApp:
         # st.markdown('# Sotis A.I. Immobilier')
         st.markdown('## Visualisez les prix de l\'immobilier en France')
         st.markdown("""
-        🏠 Les graphiques interactifs que vous découvrirez ci-dessous offrent une vue d'ensemble détaillée des valeurs immobilières en France, réparties par type de bien : maisons, appartements et locaux commerciaux. Grâce à la barre d'options latérale, personnalisez votre expérience en sélectionnant le département, l'année et la catégorie de bien qui vous intéressent. Vous aurez ainsi accès à un riche ensemble de données portant sur plusieurs millions de transactions immobilières effectuées entre 2018 et 2022.
+        🏠 Les graphiques interactifs que vous découvrirez ci-dessous offrent une vue d'ensemble détaillée des valeurs immobilières 
+                    en France, réparties par type de bien : maisons, appartements et locaux commerciaux. Grâce à la barre d'options 
+                    latérale, personnalisez votre expérience en sélectionnant le département, l'année et la catégorie de bien qui vous 
+                    intéressent. Vous aurez ainsi accès à un riche ensemble de données portant sur plusieurs millions de transactions 
+                    immobilières effectuées entre 2018 et 2022.
 
-        🏠 Pour une vision plus actuelle, sélectionnez l'année 2023. Vous obtiendrez ainsi une approximation en temps quasi-réel des valeurs de plusieurs dizaines de milliers de biens actuellement sur le marché. Veuillez noter que les données concernant les ventes réalisées en 2023 ne seront disponibles qu'à partir de 2024.
+        🏠 Pour une vision plus actuelle, sélectionnez l'année 2023. Vous obtiendrez ainsi une approximation en temps quasi-réel 
+                    des valeurs de plusieurs dizaines de milliers de biens actuellement sur le marché. Veuillez noter que les données 
+                    concernant les ventes réalisées en 2023 ne seront disponibles qu'à partir de 2024.
 
-        🏠 Naviguez, explorez et tirez le meilleur parti de ces informations pour éclairer vos décisions immobilières.""")
+        🏠 L. Gardy et Sotis A.I. ne se portent pas garants de l'exactitude des données présentées ici,
+                    qui sont fournies sans contrepartie et à titre indicatif uniquement.""")
 
         ### Section 1
         if "Carte" in self.selected_plots:
@@ -342,6 +356,9 @@ class PropertyApp:
                               les offres en quasi temps-réel. Toutefois, elles sont moins précises sur le plan géographique, 
                               étant regroupées par zones approximatives, contrairement aux données des années précédentes, qui sont 
                               présentées par adresse.""")
+                
+                st.success("""💡 Pour une meilleure visibilité des données géographiques de 2023, il est conseillé de cocher la case
+                         'Eviter la superposition des points', ci-dessous.""")
 
             if 'selected_postcode_title' in st.session_state and st.session_state.selected_postcode_title:
                 map_title = f"Distribution des prix médians pour les {self.selected_property_type.lower()}s dans le {st.session_state.selected_postcode_title} en {self.selected_year}"
