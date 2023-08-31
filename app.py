@@ -327,17 +327,21 @@ class PropertyApp:
         # st.markdown('# Sotis A.I. Immobilier')
         st.markdown('## Visualisez les prix de l\'immobilier en France')
         st.markdown("""
-        🏠 Les graphiques interactifs ci-dessous représentent les valeurs immobilières des biens (maison, appartement, etc.) en France,
-        en fonction de leur localisation géographique. La version pour **téléphone portable** 📳 de cette application fonctionne, mais doit encore être optimisée. 
-        Si vous naviguez sur un téléphone, sachez que vous pouvez cliquer sur la **flèche en haut à gauche** ⬇️ de l'écran pour
-        ouvrir le **menu latéral** ⚙️ qui vous permettra de choisir le département, l'année et le type de bien immobilier qui vous intéressent.
-        """)
+        🏠 Les graphiques interactifs que vous découvrirez ci-dessous offrent une vue d'ensemble détaillée des valeurs immobilières en France, réparties par type de bien : maisons, appartements et locaux commerciaux. Grâce à la barre d'options latérale, personnalisez votre expérience en sélectionnant le département, l'année et la catégorie de bien qui vous intéressent. Vous aurez ainsi accès à un riche ensemble de données portant sur plusieurs millions de transactions immobilières effectuées entre 2018 et 2022.
+
+        🏠 Pour une vision plus actuelle, sélectionnez l'année 2023. Vous obtiendrez ainsi une approximation en temps quasi-réel des valeurs de plusieurs dizaines de milliers de biens actuellement sur le marché. Veuillez noter que les données concernant les ventes réalisées en 2023 ne seront disponibles qu'à partir de 2024.
+
+        🏠 Naviguez, explorez et tirez le meilleur parti de ces informations pour éclairer vos décisions immobilières.""")
 
         ### Section 1
         if "Carte" in self.selected_plots:
             # Afficher l'alerte si l'année sélectionnée est 2023
             if "2023" in self.selected_year:
-                st.warning("Attention : Les données tarifaires pour l'année 2023 proviennent directement d'agences immobilières et sont actualisées en continu. Il est important de noter que ces informations diffèrent des données gouvernementales disponibles pour les années antérieures (2018 à 2022). Par conséquent, nous vous recommandons d'exercer une vigilance accrue lors de leur interprétation. De plus, veuillez noter que la précision des localisations géographiques pour les biens immobiliers de 2023 est moins fiable que pour les années précédentes.")
+                st.warning("""⚠️ Les tarifs pour 2023 sont mis à jour régulièrement grâce à notre robot Sotis-IMMO 🤖.
+                              À la différence des données de 2018-2022, qui concernent des biens déjà vendus, celles de 2023 présentent 
+                              les offres en quasi temps-réel. Toutefois, elles sont moins précises sur le plan géographique, 
+                              étant regroupées par zones approximatives, contrairement aux données des années précédentes, qui sont 
+                              présentées par adresse.""")
 
             if 'selected_postcode_title' in st.session_state and st.session_state.selected_postcode_title:
                 map_title = f"Distribution des prix médians pour les {self.selected_property_type.lower()}s dans le {st.session_state.selected_postcode_title} en {self.selected_year}"
@@ -349,20 +353,12 @@ class PropertyApp:
 
         ### Section 2
         if "Fig. 1" in self.selected_plots:
-            # Afficher l'alerte si l'année sélectionnée est 2023
-            if "2023" in self.selected_year:
-                st.warning("Attention : Les données tarifaires pour l'année 2023 proviennent directement d'agences immobilières et sont actualisées en continu. Il est important de noter que ces informations diffèrent des données gouvernementales disponibles pour les années antérieures (2018 à 2022). Par conséquent, nous vous recommandons d'exercer une vigilance accrue lors de leur interprétation. De plus, veuillez noter que la précision des localisations géographiques pour les biens immobiliers de 2023 est moins fiable que pour les années précédentes.")
-
             st.markdown(f"### Fig 1. Distribution des prix médians dans le {self.selected_department} en {self.selected_year}")
             self.plot_1()
             st.divider()
 
         ### Section 3
         if "Fig. 2" in self.selected_plots:
-            # Afficher l'alerte si l'année sélectionnée est 2023
-            if "2023" in self.selected_year:
-                st.warning("Attention : Les données tarifaires pour l'année 2023 proviennent directement d'agences immobilières et sont actualisées en continu. Il est important de noter que ces informations diffèrent des données gouvernementales disponibles pour les années antérieures (2018 à 2022). Par conséquent, nous vous recommandons d'exercer une vigilance accrue lors de leur interprétation. De plus, veuillez noter que la précision des localisations géographiques pour les biens immobiliers de 2023 est moins fiable que pour les années précédentes.")
-
             st.markdown(f"### Fig 2. Distribution des prix médians pour les {self.selected_property_type.lower()}s dans le {self.selected_department} en {self.selected_year}")
             st.markdown("""Les nombres au-dessus des barres représentent le nombre de biens par code postal. 
                         Ils fournissent un contexte sur le volume des ventes pour chaque zone.""")
@@ -371,20 +367,12 @@ class PropertyApp:
 
         ### Section 4
         if "Fig. 3" in self.selected_plots:
-            # Afficher l'alerte si l'année sélectionnée est 2023
-            if "2023" in self.selected_year:
-                st.warning("Attention : Les données tarifaires pour l'année 2023 proviennent directement d'agences immobilières et sont actualisées en continu. Il est important de noter que ces informations diffèrent des données gouvernementales disponibles pour les années antérieures (2018 à 2022). Par conséquent, nous vous recommandons d'exercer une vigilance accrue lors de leur interprétation. De plus, veuillez noter que la précision des localisations géographiques pour les biens immobiliers de 2023 est moins fiable que pour les années précédentes.")
-
             st.markdown(f"### Fig 3. Evolution des prix médians des {self.selected_property_type.lower()}s dans le {self.selected_department} entre 2018 et 2022")
             self.plot_3()
             st.divider()
 
         ### Section 5
         if "Fig. 4" in self.selected_plots:
-            # Afficher l'alerte si l'année sélectionnée est 2023
-            if "2023" in self.selected_year:
-                st.warning("Attention : Les données tarifaires pour l'année 2023 proviennent directement d'agences immobilières et sont actualisées en continu. Il est important de noter que ces informations diffèrent des données gouvernementales disponibles pour les années antérieures (2018 à 2022). Par conséquent, nous vous recommandons d'exercer une vigilance accrue lors de leur interprétation. De plus, veuillez noter que la précision des localisations géographiques pour les biens immobiliers de 2023 est moins fiable que pour les années précédentes.")
-
             st.markdown(f"### Fig 4. Distribution des prix unitaires (par bien) dans votre quartier en {self.selected_year}")
             self.plot_4()
 
@@ -429,7 +417,12 @@ class PropertyApp:
             filtered_df = filtered_df[filtered_df['valeur_fonciere'] <= upper_fence]
 
         # (Optional) Jittering : add a small random value to the coordinates to avoid overlapping markers
-        self.jitter_value = 0.001 if self.use_jitter else 0
+        if int(self.selected_year.split(" ")[-1]) == 2023:
+            val = 0.1
+        else:
+            val = 0.001
+
+        self.jitter_value = val if self.use_jitter else 0
         filtered_df['longitude'] = filtered_df['longitude'].astype(float)
         filtered_df['latitude'] = filtered_df['latitude'].astype(float)
         filtered_df.loc[:, 'latitude'] = filtered_df['latitude'] + np.random.uniform(-self.jitter_value, self.jitter_value, size=len(filtered_df))
@@ -457,6 +450,13 @@ class PropertyApp:
         fig.update_layout(mapbox_style=self.selected_mapbox_style)
         fig.update_coloraxes(colorbar_thickness=10, colorbar_title_text="", colorbar_x=1, colorbar_xpad=0, colorbar_len=1.0, colorbar_y=0.5)
         fig.update_layout(height=800)
+
+
+        # message = st.chat_message("assistant")
+        # message.write("""Bonjour! Je suis le robot qui scanne les prix de l'immobilier en France, pour l'année 2023. 
+        #               Je dois vous informer que les données tarifaires pour l'année 2023 proviennent directement d'agences immobilières et sont actualisées en continu.
+        #               Il est important de noter que ces informations diffèrent des données gouvernementales disponibles pour les années antérieures (2018 à 2022).""")
+        # message.plotly_chart(fig, use_container_width=True)
 
         st.plotly_chart(fig, use_container_width=True)
 
