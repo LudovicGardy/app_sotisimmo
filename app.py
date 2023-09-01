@@ -413,8 +413,9 @@ class PropertyApp:
             st.caption("""Retirer les valeurs extrêmes (>1.5*IQR) permet d'améliorer la lisibilité de la carte.
                        Ces valeurs sont éliminées uniquement sur cette représentation, pas les prochaine.""")
 
-        st.success("""💡 Pour une meilleure visibilité des données géographiques de 2023, il est conseillé de cocher la case
-                    'Eviter la superposition des points' ci-dessus.""")
+        if "2023" in self.selected_year:
+            st.success("""💡 Pour une meilleure visibilité des données géographiques de 2023, il est conseillé de cocher la case
+                        'Eviter la superposition des points' ci-dessus.""")
 
         # Filtring the dataframe by property type
         filtered_df = self.df_pandas[self.df_pandas['type_local'] == self.selected_property_type]
