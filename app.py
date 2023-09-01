@@ -70,7 +70,7 @@ except Exception as e:
 st.set_page_config(page_title='Sotis Immobilier', 
                     page_icon = "https://sotisimmo.s3.eu-north-1.amazonaws.com/Sotis_AI_pure_darkbg_240px.ico",  
                     layout = 'wide',
-                    initial_sidebar_state = 'expanded')
+                    initial_sidebar_state = 'auto')
 
 ### Track the app with streamlit-analytics
 ### Analytics data will be stored in a Google Cloud Firestore database
@@ -132,7 +132,7 @@ class PropertyApp:
         with col2:
             st.write("# Sotis A.I.")
 
-        st.caption("""Cette application a été designée par Ludovic Gardy, Sotis A.I.© 2023, pour répondre à un besoin de lecture plus claire du marché immobilier. 
+        st.caption("""Cette application est produite par Ludovic Gardy, Sotis A.I.© 2023, pour répondre à un besoin de lecture plus claire du marché immobilier. 
                     Pour en savoir plus, signaler un problème, une idée ou pour me contacter, rendez-vous sur [sotisanalytics.com](https://www.sotisanalytics.com). 
                     Bonne visite !""")
 
@@ -290,8 +290,6 @@ class PropertyApp:
         # Filter the summarized data for the given department
         dept_data = self.summarized_df_pandas[self.summarized_df_pandas['code_postal'] == self.selected_department]
         column_to_use = 'median_value_SQM' if self.normalize_by_area else 'median_value'
-
-
         
         type_data = dept_data[dept_data['type_local'] == property_type]
         type_data = type_data.sort_values(by="Year")
@@ -345,7 +343,7 @@ class PropertyApp:
                     concernant les ventes réalisées en 2023 ne seront disponibles qu'à partir de 2024.
 
         🏠 L. Gardy et Sotis A.I. ne se portent pas garants de l'exactitude des données présentées ici,
-                    qui sont fournies sans contrepartie et à titre indicatif uniquement.""")
+                    qui sont fournies à titre indicatif uniquement, sans contrepartie, publicité ni inscription.""")
 
         ### Section 1
         if "Carte" in self.selected_plots:
@@ -357,9 +355,6 @@ class PropertyApp:
                               étant regroupées par zones approximatives, contrairement aux données des années précédentes, qui sont 
                               présentées par adresse.""")
                 
-                st.success("""💡 Pour une meilleure visibilité des données géographiques de 2023, il est conseillé de cocher la case
-                         'Eviter la superposition des points', ci-dessous.""")
-
             if 'selected_postcode_title' in st.session_state and st.session_state.selected_postcode_title:
                 map_title = f"Distribution des prix médians pour les {self.selected_property_type.lower()}s dans le {st.session_state.selected_postcode_title} en {self.selected_year}"
             else:
@@ -385,6 +380,8 @@ class PropertyApp:
         ### Section 4
         if "Fig. 3" in self.selected_plots:
             st.markdown(f"### Fig 3. Evolution des prix médians des {self.selected_property_type.lower()}s dans le {self.selected_department} entre 2018 et 2022")
+            if "2023" in self.selected_year:
+                st.warning("""La figure 3 ne peut pas encore s'étendre à 2023 et s'arrête à 2022. Une mise à jour sera publiée prochainement.""")
             self.plot_3()
             st.divider()
 
@@ -415,6 +412,9 @@ class PropertyApp:
             self.remove_outliers = st.checkbox("Supprimer les valeurs extrêmes", True)
             st.caption("""Retirer les valeurs extrêmes (>1.5*IQR) permet d'améliorer la lisibilité de la carte.
                        Ces valeurs sont éliminées uniquement sur cette représentation, pas les prochaine.""")
+
+        st.success("""💡 Pour une meilleure visibilité des données géographiques de 2023, il est conseillé de cocher la case
+                    'Eviter la superposition des points' ci-dessus.""")
 
         # Filtring the dataframe by property type
         filtered_df = self.df_pandas[self.df_pandas['type_local'] == self.selected_property_type]
