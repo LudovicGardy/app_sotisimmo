@@ -72,6 +72,18 @@ st.set_page_config(page_title='Sotis Immobilier',
                     layout = 'wide',
                     initial_sidebar_state = 'auto')
 
+
+st.markdown(
+    """
+    <style>
+        .css-10pw50 {
+            visibility:hidden;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 ### Track the app with streamlit-analytics
 ### Analytics data will be stored in a Google Cloud Firestore database
 if platform.node() != "MacBookPro-LudovicGardy.local":
@@ -133,8 +145,11 @@ class PropertyApp:
             st.write("# Sotis A.I.")
 
         st.caption("""Cette application est produite par Ludovic Gardy, Sotis A.I.© 2023, pour répondre à un besoin de lecture plus claire du marché immobilier. 
-                    Pour en savoir plus, signaler un problème, une idée ou pour me contacter, rendez-vous sur [sotisanalytics.com](https://www.sotisanalytics.com). 
-                    Bonne visite !""")
+                    Rendez-vous sur https://www.sotisanalytics.com pour en savoir plus, signaler un problème, une idée ou pour me contacter. Bonne visite !""")
+
+        # st.caption("""Cette application est produite par Ludovic Gardy, Sotis A.I.© 2023, pour répondre à un besoin de lecture plus claire du marché immobilier. 
+        #             Pour en savoir plus, signaler un problème, une idée ou pour me contacter, rendez-vous sur [sotisanalytics.com](https://www.sotisanalytics.com). 
+        #             Bonne visite !""")
 
         # st.caption("""Cette application a été designée par Ludovic Gardy (L.G.), pour répondre à un besoin personnel 
         #         de lecture plus claire du marcher immobilier. Interessé par la dynamique récente du marché de l'immobilier,
@@ -349,7 +364,7 @@ class PropertyApp:
         if "Carte" in self.selected_plots:
             # Afficher l'alerte si l'année sélectionnée est 2023
             if "2023" in self.selected_year:
-                st.warning("""⚠️ Les tarifs pour 2023 sont mis à jour régulièrement grâce à notre robot Sotis-IMMO 🤖.
+                st.warning("""⚠️ Les tarifs pour 2023 sont mis à jour régulièrement par le robot Sotis-IMMO 🤖.
                               À la différence des données de 2018-2022, qui concernent des biens déjà vendus, celles de 2023 présentent 
                               les offres en quasi temps-réel. Toutefois, elles sont moins précises sur le plan géographique, 
                               étant regroupées par zones approximatives, contrairement aux données des années précédentes, qui sont 
@@ -406,14 +421,14 @@ class PropertyApp:
         with col1:
             self.use_fixed_marker_size = st.checkbox("Fixer la taille des points", False)
 
-            self.use_jitter = st.checkbox("Eviter la superposition des points", False)
-            self.jitter_value = 0.001       
+            self.use_jitter = st.checkbox("Eviter la superposition des points", True)
+            self.jitter_value = 0 #0.001       
 
             self.remove_outliers = st.checkbox("Supprimer les valeurs extrêmes", True)
             st.caption("""Retirer les valeurs extrêmes (>1.5*IQR) permet d'améliorer la lisibilité de la carte.
                        Ces valeurs sont éliminées uniquement sur cette représentation, pas les prochaine.""")
 
-        if "2023" in self.selected_year:
+        if "2023" in self.selected_year and not self.use_jitter:
             st.success("""💡 Pour une meilleure visibilité des données géographiques de 2023, il est conseillé de cocher la case
                         'Eviter la superposition des points' ci-dessus.""")
 
@@ -438,7 +453,7 @@ class PropertyApp:
         if int(self.selected_year.split(" ")[-1]) == 2023:
             val = 0.1
         else:
-            val = 0.001
+            val = 0 #0.001
 
         self.jitter_value = val if self.use_jitter else 0
         filtered_df['longitude'] = filtered_df['longitude'].astype(float)
