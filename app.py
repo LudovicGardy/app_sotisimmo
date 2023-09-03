@@ -259,7 +259,7 @@ class PropertyApp:
         ### Set up the year selectbox
         years = ["Vendus en 2018", "Vendus en 2019", "Vendus en 2020", "Vendus en 2021", "Vendus en 2022", "En vente en 2023"]
         default_year = years.index("Vendus en 2022")
-        self.selected_year = st.selectbox("Aannée", years, index=default_year).split(" ")[-1]
+        self.selected_year = st.selectbox("Année", years, index=default_year).split(" ")[-1]
 
         ### Load data
         self.df_pandas = load_data(self.selected_department, self.selected_year)
