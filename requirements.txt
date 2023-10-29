@@ -2,8 +2,8 @@ streamlit
 requests
 pandas
 plotly
-Pillow
 seaborn
 streamlit-analytics
 google-cloud-firestore
 python-dotenv
+modin[all]

@@ -1,22 +1,24 @@
 import streamlit as st
 import requests
 from io import BytesIO
-import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import seaborn as sns
 import numpy as np
-import matplotlib.cm as cm
-import streamlit.components.v1 as components
-from gzip import BadGzipFile
 import platform
 import os
-from tempfile import NamedTemporaryFile
 import json
 
 ### Analytics data will be stored in a Google Cloud Firestore database
 import streamlit_analytics
 from google.cloud import firestore
+
+### Speed up dataframe operations
+##- Note : Modin scales Pandas code by using many CPU cores, via Ray or Dask. 
+##- RAPIDS scales Pandas code by running it on GPUs. 
+import pandas as pd
+# pip install "modin[all]"
+# import modin.pandas as pd
 
 from dotenv import load_dotenv, dotenv_values
 
@@ -27,7 +29,8 @@ try:
     "type": "service_account",
     "project_id": config['PROJECT_ID'],
     "private_key_id": config['PRIVATE_KEY_ID'],
-    "private_key": f"-----BEGIN PRIVATE KEY-----\n{config['PRIVATE_KEY']}\nQRvUMBhovN3NVKFCWGI242MTctN8p5VTnAgbMWEaoCuajuZAiqZIr0ekSYMrPY9U\nK8sQF259Mm10v5AMCyNhFkfB3Hb9Um18kxTlzh8zgHilznxTCY62/fgvcSGE2mPM\nPd5yHtXGWlmnbRKQrT1v0uTlTOSentJRedfa5qDbe4mOyWAVUlSnB39xG/3bxen5\nSWBj2x2ReeK2YnSL+xHkyYk9sDlzgw4ODcdPpM2gHprt9dqdkKxT+y0AiJJz/Hu/\nw53kKPBkp+Cf/4XJtPOafe4ncydD5Tj1XS9rKGvyOgOMV3UrDjh0To90FcGJNCL5\nxXyn94onAgMBAAECggEABlYbkhpz4sKHIcTWIAfPkHqNqqr90NCajInhMDPmeDP3\nNJI+MaVJzTLFGduBXfmd8tUto8ILE04MHyMyy9MluZ9zDTLfiUN/h2zXL+RlG/tt\nUW6QoIPFmVh7Z1PBS2c1fb4nQffVBEPxbh24cPBdp4LlaTnpxxWzUuCmI3rHqXHm\nVOoW66TTdn2fk8hhjJaYzCulL6/pOuRMMWCu3xvt+VeVHlpdq3J6CAxImAvHedMI\nxzfXd/Lcialv0geN1TI6EqUfDD7D1ZZqsrksNZM1inmUwK48LrSSYZjkm51voYzf\nFD7y5qKU8hq/FAV7flbh2wuAtSLubETGRKHLjpXIeQKBgQD7zEMNLDSZJymextbt\nUrk6Jh1v73kFFXDJv/CTEybO+3BTIBcJVjzXAG0mF7NERlUy6jiHee9aISXoTm8R\necNo+n1AngBz7bCTWRhT/eblSLVSMN2hwwgdQuqWpJZWFO7ZtR349K/VX0zBFPtF\n98Asgnmqg8X9X4s7JSzle1gWgwKBgQDvNF1Aft5AqP6CAF/oP7+g/eBvnxDtDg1R\nS6Pl24nxSMtFVa4wfq2gM10E98971Vq7VsxNWqo2W3CT85jKe0D3zRAGlZ0jjMl5\nIhUt8V2Vq6q6MvEIAVgesZtvOXb2K9f3h1BOdIP2WPRXGJDnuGY9j0u4UWW7SUAb\naBhYdfcMjQKBgC8lZNyfjU2r3ogjNPUEyzfPES33SdKg3Bh6fuIa8OZKgBKgbI/L\n/OJI6yb5wxAilytMXb9IHn/iuwVPQk6kXOlYFYG20+Dg/XHpebuoS8Zcoc685ZK3\nQNqxv9jrAlcl3j8XQYBu2El8aZOxiQblx67N01gRCk5RyHEPmeNx/+FfAoGARfYq\n0BJLLt4+kgdKBcOfaJbYbc04Rh02B/D3nuL3FXsU+NJ2f/iND632Jt3T8YQVZXWd\ni4JZBkz4QE2fApnKBrATX9mifCNRSfyN9UIC/SOYa506ofzCqTeJHp7QDHAGWn9Z\nHZk2f3bFADRPLXbhcF/Y5a/o8T4bYeiwNi9KcoECgYBGJ5NmQVy6ts19DpyWzK2+\nK8mG+vCx1rLfhwNW8ssrQsa+k9CE+krj/LflxfkHzQcOVoTgRxbHxT/TgBYCuoyE\nhnQb2L0bA/tayaMG2mz6rfBt6spliAaLl+4bvu6BWP4KY0jqg+mUsyrqumHNVgSp\nqqoHxy8uVFxNcMOw8AStmg==\n-----END PRIVATE KEY-----\n",
+    "private_key": f"-----BEGIN PRIVATE KEY-----\n{config['PRIVATE_KEY']}\nv/CmHtyEa6fPS+oi/oOPureIBcFBjNLKjzdcDzdUokAPwBVhZf0z0JO4zcqc+vfi\nXQpG4gOfzzYc6xie+RtMcWKEEV/DKFhJsQXgXfqs0f/KdtzZ0LPO8AH4y7txizew\nFi1FZSJ67ZDku5fzCP9jdMsQky1ItXzUnGfFckxV9FzT+Wm0/IMu/dr4o42Ms/+d\nB5wKV62/m1M35OcKsu6lahCIMzbqok5Tu92CZIpurLrB1y+MgpJ8xVUG/yRackPV\nZit/6g2gYRo1BtdfuTc0OK+ec4hhT+zxhIb4FQuBgB5g9smKKu1SACJyheMXOBsp\nsvi0z10tAgMBAAECggEASXq1bQPR7673RnZ17f+D9/VOkipnJlki424kXVXE0Wt0\nsK0sqWtiqFCM/7ZffrQ0/67vCuvkZNYnqaeRvDsTp4Gk+JMkZrv1CA7+EjMFK3S7\nJ4jeHejyKsyyT3CQNDCyClkdo5yeQas8OhsCbJNz4w1XVNTI7FWa1eMryhtZYAZy\nNFerqANc/vS0fhBlgY852aa8ntEocbVjwv0teoJAqIT8ZVc0bYYWf6kYqT+6Ygys\ngXGCtmIyNAkOEmz/g0jBi8YJf7PoXk51cVJ4IHuJbMtoPWimyHScNC/skh0LPnZH\nwyTmuHPeadBj2z2UXRQBlUQEsLwnOEPdF9qncijmvwKBgQD2KSiN2ZPNzNsuYXlF\nx38qb13ZicBG0ynyvfG5ERK8bXOgS+ur+8+ArgBlvS0T5JNHIetDzwq9J/8A+NMj\nS/UiUHfqrhFXx7/4f+4z2vptktYQNEwYikGUaUFGdj73rswCqW+kQNd8h322CIZi\n0O5BNP5sAkgaYeBSNmf4gGSxIwKBgQDEFafXlD7JuiPtSwuCMTWvnyYPODuk3/ry\nroiDa3UXyFfkSxLWaCz+zPQAHjA5Ktf4Nq5VjaJQhNDBja/tjtjGZKXEnqq7hrmx\nqKxCaJWJaC4yrJmbQ964Cgv52lz+4NuWMR8gMfRsw+fW0ihZBnFX1vfHrlUMbTRU\nN4Th4EmlbwKBgQDPseqFxQ7wlehZOeUY+zpQk6ab5Z5WI9VA+wL5I26rja4Bkg1H\nDzAFYsrzDKr8HeAmJHhcvlRRRW3jZA7BuVUbnsmPOU9owSE4irhxCFJEIaB8C6Qp\nEH5EuopY6Ww3j0SS+mM4M32dlLR84rSAq8hbPFtuxn4PxIWA2GbhRXOwAQKBgQCG\nJFJ4VoBFvMOLOEWdQVD63iNJUizrdBbXIrNdRIwMQxBtqzYt24K8pTVfR0eyNC8f\nLTlCaexarSGq5+Us3QZLYttMkUc3lsk+UqfVnnp+T/kazZ0f7ORWfvkGam4oJ2fR\nbbVfbw1JwxO9kHPtw0ySzQshXY/tOmAMJRcQ90EqnQKBgBftpQuhKSwPL6idaYGh\n4IdKgWKLkIy2pkUagHv1y4giVp/Qk5Z9qhqk/+adu0MDKEpfKrMSRzaEC8U2HZzR\nBYaws7sGqxNojXjCjZAsAgrR/ik1dJofaWc9PcsKTlPKFSwI5RffaKl4MBJ4m/xA\nlstIbgdUbjCtpAanEi5wdMKK\n-----END PRIVATE KEY-----\n",
+
     "client_email": config['CLIENT_EMAIL'],
     "client_id": config['CLIENT_ID'],
     "auth_uri": config['AUTH_URI'],
@@ -44,7 +47,7 @@ except Exception as e:
         "type": "service_account",
         "project_id": os.environ.get('PROJECT_ID'),
         "private_key_id": os.environ.get('PRIVATE_KEY_ID'),
-        "private_key": f"-----BEGIN PRIVATE KEY-----\n{os.environ.get('PRIVATE_KEY')}\nQRvUMBhovN3NVKFCWGI242MTctN8p5VTnAgbMWEaoCuajuZAiqZIr0ekSYMrPY9U\nK8sQF259Mm10v5AMCyNhFkfB3Hb9Um18kxTlzh8zgHilznxTCY62/fgvcSGE2mPM\nPd5yHtXGWlmnbRKQrT1v0uTlTOSentJRedfa5qDbe4mOyWAVUlSnB39xG/3bxen5\nSWBj2x2ReeK2YnSL+xHkyYk9sDlzgw4ODcdPpM2gHprt9dqdkKxT+y0AiJJz/Hu/\nw53kKPBkp+Cf/4XJtPOafe4ncydD5Tj1XS9rKGvyOgOMV3UrDjh0To90FcGJNCL5\nxXyn94onAgMBAAECggEABlYbkhpz4sKHIcTWIAfPkHqNqqr90NCajInhMDPmeDP3\nNJI+MaVJzTLFGduBXfmd8tUto8ILE04MHyMyy9MluZ9zDTLfiUN/h2zXL+RlG/tt\nUW6QoIPFmVh7Z1PBS2c1fb4nQffVBEPxbh24cPBdp4LlaTnpxxWzUuCmI3rHqXHm\nVOoW66TTdn2fk8hhjJaYzCulL6/pOuRMMWCu3xvt+VeVHlpdq3J6CAxImAvHedMI\nxzfXd/Lcialv0geN1TI6EqUfDD7D1ZZqsrksNZM1inmUwK48LrSSYZjkm51voYzf\nFD7y5qKU8hq/FAV7flbh2wuAtSLubETGRKHLjpXIeQKBgQD7zEMNLDSZJymextbt\nUrk6Jh1v73kFFXDJv/CTEybO+3BTIBcJVjzXAG0mF7NERlUy6jiHee9aISXoTm8R\necNo+n1AngBz7bCTWRhT/eblSLVSMN2hwwgdQuqWpJZWFO7ZtR349K/VX0zBFPtF\n98Asgnmqg8X9X4s7JSzle1gWgwKBgQDvNF1Aft5AqP6CAF/oP7+g/eBvnxDtDg1R\nS6Pl24nxSMtFVa4wfq2gM10E98971Vq7VsxNWqo2W3CT85jKe0D3zRAGlZ0jjMl5\nIhUt8V2Vq6q6MvEIAVgesZtvOXb2K9f3h1BOdIP2WPRXGJDnuGY9j0u4UWW7SUAb\naBhYdfcMjQKBgC8lZNyfjU2r3ogjNPUEyzfPES33SdKg3Bh6fuIa8OZKgBKgbI/L\n/OJI6yb5wxAilytMXb9IHn/iuwVPQk6kXOlYFYG20+Dg/XHpebuoS8Zcoc685ZK3\nQNqxv9jrAlcl3j8XQYBu2El8aZOxiQblx67N01gRCk5RyHEPmeNx/+FfAoGARfYq\n0BJLLt4+kgdKBcOfaJbYbc04Rh02B/D3nuL3FXsU+NJ2f/iND632Jt3T8YQVZXWd\ni4JZBkz4QE2fApnKBrATX9mifCNRSfyN9UIC/SOYa506ofzCqTeJHp7QDHAGWn9Z\nHZk2f3bFADRPLXbhcF/Y5a/o8T4bYeiwNi9KcoECgYBGJ5NmQVy6ts19DpyWzK2+\nK8mG+vCx1rLfhwNW8ssrQsa+k9CE+krj/LflxfkHzQcOVoTgRxbHxT/TgBYCuoyE\nhnQb2L0bA/tayaMG2mz6rfBt6spliAaLl+4bvu6BWP4KY0jqg+mUsyrqumHNVgSp\nqqoHxy8uVFxNcMOw8AStmg==\n-----END PRIVATE KEY-----\n",
+        "private_key": f"-----BEGIN PRIVATE KEY-----\n{os.environ.get('PRIVATE_KEY')}\nv/CmHtyEa6fPS+oi/oOPureIBcFBjNLKjzdcDzdUokAPwBVhZf0z0JO4zcqc+vfi\nXQpG4gOfzzYc6xie+RtMcWKEEV/DKFhJsQXgXfqs0f/KdtzZ0LPO8AH4y7txizew\nFi1FZSJ67ZDku5fzCP9jdMsQky1ItXzUnGfFckxV9FzT+Wm0/IMu/dr4o42Ms/+d\nB5wKV62/m1M35OcKsu6lahCIMzbqok5Tu92CZIpurLrB1y+MgpJ8xVUG/yRackPV\nZit/6g2gYRo1BtdfuTc0OK+ec4hhT+zxhIb4FQuBgB5g9smKKu1SACJyheMXOBsp\nsvi0z10tAgMBAAECggEASXq1bQPR7673RnZ17f+D9/VOkipnJlki424kXVXE0Wt0\nsK0sqWtiqFCM/7ZffrQ0/67vCuvkZNYnqaeRvDsTp4Gk+JMkZrv1CA7+EjMFK3S7\nJ4jeHejyKsyyT3CQNDCyClkdo5yeQas8OhsCbJNz4w1XVNTI7FWa1eMryhtZYAZy\nNFerqANc/vS0fhBlgY852aa8ntEocbVjwv0teoJAqIT8ZVc0bYYWf6kYqT+6Ygys\ngXGCtmIyNAkOEmz/g0jBi8YJf7PoXk51cVJ4IHuJbMtoPWimyHScNC/skh0LPnZH\nwyTmuHPeadBj2z2UXRQBlUQEsLwnOEPdF9qncijmvwKBgQD2KSiN2ZPNzNsuYXlF\nx38qb13ZicBG0ynyvfG5ERK8bXOgS+ur+8+ArgBlvS0T5JNHIetDzwq9J/8A+NMj\nS/UiUHfqrhFXx7/4f+4z2vptktYQNEwYikGUaUFGdj73rswCqW+kQNd8h322CIZi\n0O5BNP5sAkgaYeBSNmf4gGSxIwKBgQDEFafXlD7JuiPtSwuCMTWvnyYPODuk3/ry\nroiDa3UXyFfkSxLWaCz+zPQAHjA5Ktf4Nq5VjaJQhNDBja/tjtjGZKXEnqq7hrmx\nqKxCaJWJaC4yrJmbQ964Cgv52lz+4NuWMR8gMfRsw+fW0ihZBnFX1vfHrlUMbTRU\nN4Th4EmlbwKBgQDPseqFxQ7wlehZOeUY+zpQk6ab5Z5WI9VA+wL5I26rja4Bkg1H\nDzAFYsrzDKr8HeAmJHhcvlRRRW3jZA7BuVUbnsmPOU9owSE4irhxCFJEIaB8C6Qp\nEH5EuopY6Ww3j0SS+mM4M32dlLR84rSAq8hbPFtuxn4PxIWA2GbhRXOwAQKBgQCG\nJFJ4VoBFvMOLOEWdQVD63iNJUizrdBbXIrNdRIwMQxBtqzYt24K8pTVfR0eyNC8f\nLTlCaexarSGq5+Us3QZLYttMkUc3lsk+UqfVnnp+T/kazZ0f7ORWfvkGam4oJ2fR\nbbVfbw1JwxO9kHPtw0ySzQshXY/tOmAMJRcQ90EqnQKBgBftpQuhKSwPL6idaYGh\n4IdKgWKLkIy2pkUagHv1y4giVp/Qk5Z9qhqk/+adu0MDKEpfKrMSRzaEC8U2HZzR\nBYaws7sGqxNojXjCjZAsAgrR/ik1dJofaWc9PcsKTlPKFSwI5RffaKl4MBJ4m/xA\nlstIbgdUbjCtpAanEi5wdMKK\n-----END PRIVATE KEY-----\n",
         "client_email": os.environ.get('CLIENT_EMAIL'),
         "client_id": os.environ.get('CLIENT_ID'),
         "auth_uri": os.environ.get('AUTH_URI'),
@@ -147,16 +150,6 @@ class PropertyApp:
         st.caption("""Cette application est produite par Ludovic Gardy, Sotis A.I.© 2023, pour répondre à un besoin de lecture plus claire du marché immobilier. 
                     Rendez-vous sur https://www.sotisanalytics.com pour en savoir plus, signaler un problème, une idée ou pour me contacter. Bonne visite !""")
 
-        # st.caption("""Cette application est produite par Ludovic Gardy, Sotis A.I.© 2023, pour répondre à un besoin de lecture plus claire du marché immobilier. 
-        #             Pour en savoir plus, signaler un problème, une idée ou pour me contacter, rendez-vous sur [sotisanalytics.com](https://www.sotisanalytics.com). 
-        #             Bonne visite !""")
-
-        # st.caption("""Cette application a été designée par Ludovic Gardy (L.G.), pour répondre à un besoin personnel 
-        #         de lecture plus claire du marcher immobilier. Interessé par la dynamique récente du marché de l'immobilier,
-        #         j'ai créé cette application que je décide de partager avec vous. Puiss-t-elle vous être utile ! Data scientist, 
-        #         je suis aussi le fondateur de Sotis A.I., une société spécialisée dans la conception 
-        #         de solutions technologiques tournées autour de l'analyse des données et de l'intelligence artificielle. 
-        #         Pour en savoir plus, visitez notre site web : [https://www.sotisanalytics.com](https://www.sotisanalytics.com)""")
 
         st.divider()
 
@@ -484,13 +477,6 @@ class PropertyApp:
         fig.update_coloraxes(colorbar_thickness=10, colorbar_title_text="", colorbar_x=1, colorbar_xpad=0, colorbar_len=1.0, colorbar_y=0.5)
         fig.update_layout(height=800)
 
-
-        # message = st.chat_message("assistant")
-        # message.write("""Bonjour! Je suis le robot qui scanne les prix de l'immobilier en France, pour l'année 2023. 
-        #               Je dois vous informer que les données tarifaires pour l'année 2023 proviennent directement d'agences immobilières et sont actualisées en continu.
-        #               Il est important de noter que ces informations diffèrent des données gouvernementales disponibles pour les années antérieures (2018 à 2022).""")
-        # message.plotly_chart(fig, use_container_width=True)
-
         st.plotly_chart(fig, use_container_width=True)
 
     def plot_1(self):
@@ -696,22 +682,6 @@ class PropertyApp:
             with cols[idx]:
                 st.markdown(f"<div style='text-align: center;'>{property_type}</div>", unsafe_allow_html=True)
                 st.plotly_chart(fig, use_container_width=True)
-
-                # # Ajouter un bouton pour afficher le DataFrame
-                # if st.button(f"Afficher les données pour {property_type}"):
-                    
-                #     # Renommer les colonnes
-                #     subset = subset.rename(columns={
-                #         'code_postal': 'Code Postal',
-                #         'type_local': 'Type',
-                #         'valeur_fonciere': 'Valeur (€)',
-                #         'surface_reelle_bati': 'Surface (m²)'
-                #     })
-                #     selected_columns = ['Code Postal', 'Type', 'Valeur (€)', 'Surface (m²)']
-                #     subset = subset[selected_columns]
-
-                #     # Afficher le DataFrame dans Streamlit
-                #     st.dataframe(subset, hide_index=True)
 
 if platform.node() != "MacBookPro-LudovicGardy.local":
     streamlit_analytics.stop_tracking(firestore_key_file=tfile.name, firestore_collection_name="sotisimmo_analytics")
