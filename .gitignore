@@ -1,10 +1,2 @@
-derivatives/
-notebooks/
-env/
-2023/
-2023_merged/
 .DS_Store
-.Heroku_logs.png
-.DEPLOY.md
-.DOMAIN.md
 .env
