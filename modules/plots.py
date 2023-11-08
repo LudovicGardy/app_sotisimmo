@@ -79,13 +79,13 @@ class Plotter:
             st.divider()
 
         ### Section 4
-        if "Fig. 3" in self.selected_plots:
-            st.markdown(f"""### Fig 3. Evolution des prix médians des {self.selected_local_type.lower()}s dans le {self.selected_department} entre {data_gouv_dict.get('data_gouv_years')[0]} et {data_gouv_dict.get('data_gouv_years')[-1]}""")
-            if f"{data_gouv_dict.get('data_gouv_years')[-1]+1}" in self.selected_year:
-                st.warning(f"""La figure 3 ne peut pas encore s'étendre à {data_gouv_dict.get('data_gouv_years')[-1]+1} et 
-                           s'arrête à {data_gouv_dict.get('data_gouv_years')[-1]}. Une mise à jour sera publiée prochainement.""")
+        if "Fig. 3" in self.selected_plots and self.selected_year not in str(data_gouv_dict.get('data_gouv_years')[0]):
+            st.markdown(f"""### Fig 3. Evolution des prix médians des {self.selected_local_type.lower()}s dans le {self.selected_department} entre {int(self.selected_year)-1} et {self.selected_year}""")
             self.plot_3()
-            st.divider()
+        else:
+            if "Fig. 3" in self.selected_plots:
+                st.warning("Fig 3. n'existe pas car l'année sélectionnée est 2018 et que les données de 2017 ne sont pas connues.")
+                st.divider()
 
         ### Section 5
         if "Fig. 4" in self.selected_plots:
@@ -272,15 +272,15 @@ class Plotter:
             # Associez chaque année à une couleur
             year_to_color = dict(zip(sorted(years), blue_palette))            
 
-            for idx, prop_type in enumerate(local_types):
-                annual_average_diff, percentage_diff = calculate_median_difference(self.summarized_df_pandas, self.selected_department, self.normalize_by_area, prop_type)
+            for idx, local_type in enumerate(local_types):
+                annual_average_diff, percentage_diff = calculate_median_difference(self.summarized_df_pandas, self.selected_department, self.normalize_by_area, local_type, self.selected_year)
                 with cols[idx]:
                     if annual_average_diff > 0:
-                        st.metric(label=prop_type, value=f"+{annual_average_diff:.2f} € / an", delta=f"{percentage_diff:.2f} % depuis 2018")
+                        st.metric(label=local_type, value=f"+{annual_average_diff:.2f} € / an", delta=f"{percentage_diff:.2f} % depuis {data_gouv_dict.get('data_gouv_years')[0]}")
                     else:
-                        st.metric(label=prop_type, value=f"{annual_average_diff:.2f} € / an", delta=f"{percentage_diff:.2f} % depuis 2018")
+                        st.metric(label=local_type, value=f"{annual_average_diff:.2f} € / an", delta=f"{percentage_diff:.2f} % depuis {data_gouv_dict.get('data_gouv_years')[0]}")
 
-                    prop_data = dept_data[dept_data['type_local'] == prop_type]
+                    prop_data = dept_data[dept_data['type_local'] == local_type]
                     
                     # Créez une liste pour stocker les tracés
                     traces = []
@@ -298,15 +298,15 @@ class Plotter:
 
             cols = st.columns(len(local_types))
 
-            for idx, prop_type in enumerate(local_types):
+            for idx, local_type in enumerate(local_types):
 
-                annual_average_diff, percentage_diff = calculate_median_difference(self.summarized_df_pandas, self.selected_department, self.normalize_by_area, prop_type)
+                annual_average_diff, percentage_diff = calculate_median_difference(self.summarized_df_pandas, self.selected_department, self.normalize_by_area, local_type, self.selected_year)
 
                 with cols[idx]:
                     if annual_average_diff > 0:
-                        st.metric(label=prop_type, value=f"+{annual_average_diff:.2f} € / an", delta=f"{percentage_diff:.2f} % depuis 2018")
+                        st.metric(label=local_type, value=f"+{annual_average_diff:.2f} € / an", delta=f"{percentage_diff:.2f} % depuis {data_gouv_dict.get('data_gouv_years')[0]}")
                     else:
-                        st.metric(label=prop_type, value=f"{annual_average_diff:.2f} € / an", delta=f"{percentage_diff:.2f} % depuis 2018")
+                        st.metric(label=local_type, value=f"{annual_average_diff:.2f} € / an", delta=f"{percentage_diff:.2f} % depuis {data_gouv_dict.get('data_gouv_years')[0]}")
 
             fig = px.line(dept_data, 
                           x='Year', 
