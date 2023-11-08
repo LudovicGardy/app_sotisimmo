@@ -29,6 +29,7 @@ class Plotter:
         -------
         Grphical representation
         '''
+        print("Creating plots...")
 
         if self.df_pandas is None:
             st.error("Pas d'information disponible pour le département {} en {}. Sélectionnez une autre configuration.".format(self.selected_department, self.selected_year))
@@ -56,9 +57,9 @@ class Plotter:
                               présentées par adresse.""")
                 
             if 'selected_postcode_title' in st.session_state and st.session_state.selected_postcode_title:
-                map_title = f"Distribution des prix médians pour les {self.selected_property_type.lower()}s dans le {st.session_state.selected_postcode_title} en {self.selected_year}"
+                map_title = f"Distribution des prix médians pour les {self.selected_local_type.lower()}s dans le {st.session_state.selected_postcode_title} en {self.selected_year}"
             else:
-                map_title = f"Distribution des prix médians pour les {self.selected_property_type.lower()}s dans le {self.selected_department} en {self.selected_year}"
+                map_title = f"Distribution des prix médians pour les {self.selected_local_type.lower()}s dans le {self.selected_department} en {self.selected_year}"
             st.markdown(f"### {map_title}")
             self.plot_map()
             st.divider()
@@ -71,7 +72,7 @@ class Plotter:
 
         ### Section 3
         if "Fig. 2" in self.selected_plots:
-            st.markdown(f"### Fig 2. Distribution des prix médians pour les {self.selected_property_type.lower()}s dans le {self.selected_department} en {self.selected_year}")
+            st.markdown(f"### Fig 2. Distribution des prix médians pour les {self.selected_local_type.lower()}s dans le {self.selected_department} en {self.selected_year}")
             st.markdown("""Les nombres au-dessus des barres représentent le nombre de biens par code postal. 
                         Ils fournissent un contexte sur le volume des ventes pour chaque zone.""")
             self.plot_2()
@@ -79,7 +80,7 @@ class Plotter:
 
         ### Section 4
         if "Fig. 3" in self.selected_plots:
-            st.markdown(f"""### Fig 3. Evolution des prix médians des {self.selected_property_type.lower()}s dans le {self.selected_department} entre {data_gouv_dict.get('data_gouv_years')[0]} et {data_gouv_dict.get('data_gouv_years')[-1]}""")
+            st.markdown(f"""### Fig 3. Evolution des prix médians des {self.selected_local_type.lower()}s dans le {self.selected_department} entre {data_gouv_dict.get('data_gouv_years')[0]} et {data_gouv_dict.get('data_gouv_years')[-1]}""")
             if f"{data_gouv_dict.get('data_gouv_years')[-1]+1}" in self.selected_year:
                 st.warning(f"""La figure 3 ne peut pas encore s'étendre à {data_gouv_dict.get('data_gouv_years')[-1]+1} et 
                            s'arrête à {data_gouv_dict.get('data_gouv_years')[-1]}. Une mise à jour sera publiée prochainement.""")
@@ -93,6 +94,7 @@ class Plotter:
 
     def plot_map(self):
 
+        print("Creating map...")
         col1, col2 = st.columns(2)  # Créer deux colonnes
 
         with col2:
@@ -119,7 +121,7 @@ class Plotter:
                         'Eviter la superposition des points' ci-dessus.""")
 
         # Filtring the dataframe by property type
-        filtered_df = self.df_pandas[self.df_pandas['type_local'] == self.selected_property_type]
+        filtered_df = self.df_pandas[self.df_pandas['type_local'] == self.selected_local_type]
         
         # Further filtering if a postcode is selected
         if hasattr(st.session_state, 'selected_postcode'):
@@ -172,6 +174,8 @@ class Plotter:
         st.plotly_chart(fig, use_container_width=True)
 
     def plot_1(self):
+
+        print("Creating plot 1...")
         grouped_data = self.df_pandas.groupby(["code_postal", "type_local"]).agg({
             "valeur_fonciere": "median"
         }).reset_index()
@@ -200,11 +204,12 @@ class Plotter:
 
     def plot_2(self):
 
+        print("Creating plot 2...")
         # Check for orientation preference
         orientation = st.radio("Orientation", ["Barres horizontales (Grand écran)", "Barres verticales (Petit écran)"], label_visibility="hidden")
 
         # Filtring the dataframe by property type
-        filtered_df = self.df_pandas[self.df_pandas['type_local'] == self.selected_property_type]
+        filtered_df = self.df_pandas[self.df_pandas['type_local'] == self.selected_local_type]
 
         # Grouping the dataframe by postal code and calculating the average property price
         grouped = filtered_df.groupby('code_postal').agg({
@@ -234,9 +239,9 @@ class Plotter:
         st.plotly_chart(fig, use_container_width=True)
 
 
-
     def plot_3(self):
 
+        print("Creating plot 3...")
         # Add a selectbox for choosing between bar and line plot
         #plot_types = ["Bar", "Line"]
         #selected_plot_type = st.selectbox("Selectionner une visualisation", plot_types, index=0)
@@ -251,7 +256,7 @@ class Plotter:
 
         # Generate a brighter linear color palette
         years = sorted(dept_data['Year'].unique())
-        property_types = dept_data['type_local'].unique()
+        local_types = dept_data['type_local'].unique()
 
         # Liste des couleurs bleues
         blue_palette = ['#08519c', '#3182bd', '#6baed6', '#bdd7e7', '#eff3ff', '#ffffff']
@@ -262,12 +267,12 @@ class Plotter:
             return
 
         if selected_plot_type == "Graphique en barres":
-            cols = st.columns(len(property_types))
+            cols = st.columns(len(local_types))
 
             # Associez chaque année à une couleur
             year_to_color = dict(zip(sorted(years), blue_palette))            
 
-            for idx, prop_type in enumerate(property_types):
+            for idx, prop_type in enumerate(local_types):
                 annual_average_diff, percentage_diff = calculate_median_difference(self.summarized_df_pandas, self.selected_department, self.normalize_by_area, prop_type)
                 with cols[idx]:
                     if annual_average_diff > 0:
@@ -291,9 +296,9 @@ class Plotter:
                     
         else:
 
-            cols = st.columns(len(property_types))
+            cols = st.columns(len(local_types))
 
-            for idx, prop_type in enumerate(property_types):
+            for idx, prop_type in enumerate(local_types):
 
                 annual_average_diff, percentage_diff = calculate_median_difference(self.summarized_df_pandas, self.selected_department, self.normalize_by_area, prop_type)
 
@@ -320,9 +325,9 @@ class Plotter:
             
             st.plotly_chart(fig, use_container_width=True)
 
-
     def plot_4(self):
 
+        print("Creating plot 4...")
         unique_postcodes = self.df_pandas['code_postal'].unique()
                 
         ### Set up the postal code selectbox and update button
@@ -342,20 +347,20 @@ class Plotter:
         # Si le bouton est cliqué, mettez à jour la carte avec les données du code postal sélectionné
         filtered_by_postcode = self.df_pandas[self.df_pandas['code_postal'] == selected_postcode]
 
-        unique_property_types = filtered_by_postcode['type_local'].unique()
+        unique_local_types = filtered_by_postcode['type_local'].unique()
 
         # Créer le nombre approprié de colonnes
-        cols = st.columns(len(unique_property_types))
+        cols = st.columns(len(unique_local_types))
 
-        color_palette = sns.color_palette('tab10', len(unique_property_types)).as_hex()
-        colors = dict(zip(unique_property_types, color_palette))
+        color_palette = sns.color_palette('tab10', len(unique_local_types)).as_hex()
+        colors = dict(zip(unique_local_types, color_palette))
 
-        for idx, property_type in enumerate(unique_property_types):
+        for idx, local_type in enumerate(unique_local_types):
 
-            subset = filtered_by_postcode[filtered_by_postcode['type_local'] == property_type]
+            subset = filtered_by_postcode[filtered_by_postcode['type_local'] == local_type]
             trace = go.Box(y=subset['valeur_fonciere'], 
-                        name=property_type, 
-                        marker_color=colors[property_type], 
+                        name=local_type, 
+                        marker_color=colors[local_type], 
                         boxpoints='all', 
                         jitter=0.3, 
                         pointpos=0, 
@@ -372,5 +377,5 @@ class Plotter:
 
             # Ajoutez un titre en utilisant st.markdown() avant d'afficher le graphique
             with cols[idx]:
-                st.markdown(f"<div style='text-align: center;'>{property_type}</div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='text-align: center;'>{local_type}</div>", unsafe_allow_html=True)
                 st.plotly_chart(fig, use_container_width=True)

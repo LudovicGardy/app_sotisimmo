@@ -16,7 +16,7 @@ import sys
 ### Relative imports
 from modules.config import firebase_credentials, page_config, data_URL
 from modules.plots import Plotter
-from modules.data_loader import load_summarized_data, fetch_data_gouv
+from modules.data_loader import fetch_summarized_data, fetch_data_gouv
 cred_dict = firebase_credentials()
 data_gouv_dict = data_URL()
 
@@ -68,7 +68,7 @@ class PropertyApp(Plotter):
         if 'selected_postcode_title' not in st.session_state:
             st.session_state.selected_postcode_title = None
 
-        self.summarized_df_pandas = load_summarized_data()
+        self.summarized_df_pandas = fetch_summarized_data()
 
         with st.sidebar:
             self.steup_sidebar()
@@ -115,7 +115,7 @@ class PropertyApp(Plotter):
             The department selected by the user.
         self.selected_year: str
             The year selected by the user.
-        self.selected_property_type: str
+        self.selected_local_type: str
             The property type selected by the user.
         self.selected_mapbox_style: str
             The map style selected by the user.
@@ -154,9 +154,9 @@ class PropertyApp(Plotter):
             self.df_pandas = self.df_pandas.copy()
 
             ### Set up the property type selectbox
-            property_types = sorted(self.df_pandas['type_local'].unique())
+            local_types = sorted(self.df_pandas['type_local'].unique())
             selectbox_key = f'local_type_{self.selected_department}_{self.selected_year}'
-            self.selected_property_type = st.selectbox('Type de bien', property_types, key=selectbox_key)
+            self.selected_local_type = st.selectbox('Type de bien', local_types, key=selectbox_key)
 
             ### Set up the normalization checkbox
             self.normalize_by_area = st.checkbox('Prix au m²', True)

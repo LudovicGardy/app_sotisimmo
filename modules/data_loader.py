@@ -5,7 +5,9 @@ from io import BytesIO
 
 from .config import data_URL
 
-def load_summarized_data():
+@st.cache_data
+def fetch_summarized_data():
+    print("Fetching summarized data...")
 
     ### Download data summarized from AWS S3
     url = data_URL().get('summarized_data_url')
@@ -23,7 +25,11 @@ def load_summarized_data():
 
 @st.cache_data
 def fetch_data_AzureSQL(selected_dept, selected_year):
-    ### Remember to fetch data only once
+    ### Fetch only when user changes the year
+    pass
+
+def update_data_AzureSQL():
+    ### Update request when user changes the departement
     pass
 
 ### Load data 
@@ -32,7 +38,32 @@ def fetch_data_gouv(selected_dept, selected_year):
     '''
     Load data from the French open data portal.
     @st.cache_data is used to cache the data, so that it is not reloaded every time the user changes a parameter.
+
+    Data are organized as follows:
+    - 2018
+     - 01
+        - appartement
+        - maison
+        - ...
+     - 02
+     - 03
+     - ...
+
+    - 2019
+     - 01
+        - appartement
+        - maison
+        - ...
+     - 02
+     - 03
+     - ...
+
+    ...
+
+    So this function should be called each time the user selects a new department or a new year.
     '''
+
+    print("Fetching data from the French open data portal... Year: {}, Department: {}".format(selected_year, selected_dept))
     df_pandas = None  # Initialisez df_pandas à None ou pd.DataFrame()
 
     # Data from government are available only for the years 2018-2022

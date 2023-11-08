@@ -17,12 +17,12 @@ def firebase_credentials():
     cred_dict = {}
     try:
         # Try to load environment variables from the .env file
-        print('Searching in local environment variables (.env file)...')
+        print('\n\nSearching in local environment variables (.env file)...')
         config = dotenv_values('.env')
         source = config if config else os.environ
     except Exception as e:
         # Fallback to OS environment variables if .env file is not found
-        print('No .env file was found or an error occurred:', str(e))
+        print('\n\nNo .env file was found or an error occurred:', str(e))
         print('Searching in OS environment variables...')
         source = os.environ
 
