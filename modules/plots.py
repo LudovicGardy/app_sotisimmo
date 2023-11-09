@@ -57,22 +57,22 @@ class Plotter:
                               présentées par adresse.""")
                 
             if 'selected_postcode_title' in st.session_state and st.session_state.selected_postcode_title:
-                map_title = f"Distribution des prix médians pour les {self.selected_local_type.lower()}s dans le {st.session_state.selected_postcode_title} en {self.selected_year}"
+                map_title = f"Distribution des prix unitaires pour les :blue[{self.selected_local_type.lower()}s] dans le :blue[{st.session_state.selected_postcode_title}] en :blue[{self.selected_year}]"
             else:
-                map_title = f"Distribution des prix médians pour les {self.selected_local_type.lower()}s dans le {self.selected_department} en {self.selected_year}"
+                map_title = f"Distribution des prix unitaires pour les :blue[{self.selected_local_type.lower()}s] dans le :blue[{self.selected_department}] en :blue[{self.selected_year}]"
             st.markdown(f"### {map_title}")
             self.plot_map()
             st.divider()
 
         ### Section 2
         if "Fig. 1" in self.selected_plots:
-            st.markdown(f"### Fig 1. Distribution des prix médians dans le {self.selected_department} en {self.selected_year}")
+            st.markdown(f"### Fig 1. Distribution des prix médians pour tous les types de biens dans le :blue[{self.selected_department}] en :blue[{self.selected_year}]")
             self.plot_1()
             st.divider()
 
         ### Section 3
         if "Fig. 2" in self.selected_plots:
-            st.markdown(f"### Fig 2. Distribution des prix médians pour les {self.selected_local_type.lower()}s dans le {self.selected_department} en {self.selected_year}")
+            st.markdown(f"### Fig 2. Distribution des prix médians pour les :blue[{self.selected_local_type.lower()}s] dans le :blue[{self.selected_department}] en :blue[{self.selected_year}]")
             st.markdown("""Les nombres au-dessus des barres représentent le nombre de biens par code postal. 
                         Ils fournissent un contexte sur le volume des ventes pour chaque zone.""")
             self.plot_2()
@@ -80,16 +80,18 @@ class Plotter:
 
         ### Section 4
         if "Fig. 3" in self.selected_plots and self.selected_year not in str(data_gouv_dict.get('data_gouv_years')[0]):
-            st.markdown(f"""### Fig 3. Evolution des prix médians des {self.selected_local_type.lower()}s dans le {self.selected_department} entre {int(self.selected_year)-1} et {self.selected_year}""")
+            st.markdown(f"""### Fig 3. Evolution des prix médians des :blue[{self.selected_local_type.lower()}s] dans le :blue[{self.selected_department}] entre :blue[{int(self.selected_year)-1}] et :blue[{self.selected_year}]""")
             self.plot_3()
         else:
             if "Fig. 3" in self.selected_plots:
-                st.warning("Fig 3. n'existe pas car l'année sélectionnée est 2018 et que les données de 2017 ne sont pas connues.")
+                st.warning("Fig 3. ne peut pas être calculée car l'année sélectionnée est 2018. Or, les données de 2017 ne sont pas connues pas ce programme.")
                 st.divider()
 
         ### Section 5
+        ##- Defining a modifiable title using a placeholder (empty string)
         if "Fig. 4" in self.selected_plots:
-            st.markdown(f"### Fig 4. Distribution des prix unitaires (par bien) dans votre quartier en {self.selected_year}")
+            self.fig4_title = st.empty()
+            self.fig4_title.markdown(f"### Fig 4. Distribution des prix unitaires pour tous les types de biens dans le :blue[votre quartier] en :blue[{self.selected_year}]")
             self.plot_4()
 
     def plot_map(self):
@@ -276,19 +278,32 @@ class Plotter:
                 annual_average_diff, percentage_diff = calculate_median_difference(self.summarized_df_pandas, self.selected_department, self.normalize_by_area, local_type, self.selected_year)
                 with cols[idx]:
                     if annual_average_diff > 0:
-                        st.metric(label=local_type, value=f"+{annual_average_diff:.2f} € / an", delta=f"{percentage_diff:.2f} % depuis {data_gouv_dict.get('data_gouv_years')[0]}")
+                        st.metric(label=local_type, value=f"+{annual_average_diff:.2f} € / an", delta=f"{percentage_diff:.2f} % depuis {int(self.selected_year)-1}")
                     else:
-                        st.metric(label=local_type, value=f"{annual_average_diff:.2f} € / an", delta=f"{percentage_diff:.2f} % depuis {data_gouv_dict.get('data_gouv_years')[0]}")
+                        st.metric(label=local_type, value=f"{annual_average_diff:.2f} € / an", delta=f"{percentage_diff:.2f} % depuis {int(self.selected_year)-1}")
 
                     prop_data = dept_data[dept_data['type_local'] == local_type]
-                    
+
                     # Créez une liste pour stocker les tracés
                     traces = []
                     for year in prop_data['Year'].unique():
                         year_data = prop_data[prop_data['Year'] == year]
                         traces.append(go.Bar(x=year_data['Year'], y=year_data[value_column], name=str(year), marker_color=year_to_color[year]))
                     
-                    layout = go.Layout(barmode='group', height=400, showlegend=False)
+                    layout = go.Layout(barmode='group', 
+                                       height=400, 
+                                       showlegend=False, 
+                                        title={
+                                            'text': f'Variations de 2018 à {self.selected_year}',
+                                            'x': 0.5, # Centre le titre en largeur
+                                            'xanchor': 'center', # Ancre le titre au centre
+                                            'yanchor': 'top', # Positionne le titre en haut
+                                            'font': {
+                                                'family': "Arial",
+                                                'color': "white"
+                                            }
+                                        }
+                    )
 
                     fig = go.Figure(data=traces, layout=layout)
                     st.plotly_chart(fig, use_container_width=True)
@@ -314,7 +329,8 @@ class Plotter:
                           color='type_local',
                           labels={"median_value": "Prix médian en €", "Year": "Année"},
                           markers=True,
-                          height=600)
+                          height=600,
+                          title=f"Variations de 2018 à {self.selected_year}")
 
             fig.update_layout(xaxis_title="Type de bien",
                               yaxis_title="Prix médian en €",
@@ -331,7 +347,8 @@ class Plotter:
         unique_postcodes = self.df_pandas['code_postal'].unique()
                 
         ### Set up the postal code selectbox and update button
-        selected_postcode = st.selectbox("Code postal", sorted(unique_postcodes))
+        self.selected_postcode = st.selectbox("Code postal", sorted(unique_postcodes))
+        self.fig4_title.markdown(f"### Fig 4. Distribution des prix unitaires pour tous les types de biens dans le :blue[{self.selected_postcode}] en :blue[{self.selected_year}]")
 
         # col1, col2 = st.columns([1,3])
         # with col1:
@@ -345,7 +362,7 @@ class Plotter:
             
 
         # Si le bouton est cliqué, mettez à jour la carte avec les données du code postal sélectionné
-        filtered_by_postcode = self.df_pandas[self.df_pandas['code_postal'] == selected_postcode]
+        filtered_by_postcode = self.df_pandas[self.df_pandas['code_postal'] == self.selected_postcode]
 
         unique_local_types = filtered_by_postcode['type_local'].unique()
 
