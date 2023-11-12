@@ -42,6 +42,18 @@ def firebase_credentials():
 
     return cred_dict
 
+def azure_credentials():
+
+    cred_dict = {
+        'server': 'serveur-oct-2023.database.windows.net',
+        'database': 'SotisImmo_DB',
+        'uid': 'root_gardy',
+        'pwd': 'Tagazok123',
+        'table': 'BienIci'
+    }
+
+    return cred_dict
+
 def page_config():
     '''
     Set the page configuration (title, favicon, layout, etc.)
