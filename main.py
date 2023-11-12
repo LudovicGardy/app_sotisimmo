@@ -16,7 +16,7 @@ import sys
 ### Relative imports
 from modules.config import firebase_credentials, page_config, data_URL
 from modules.plots import Plotter
-from modules.data_loader import fetch_summarized_data, fetch_data_gouv
+from modules.data_loader import fetch_summarized_data, fetch_data_gouv, fetch_data_AzureSQL
 cred_dict = firebase_credentials()
 data_gouv_dict = data_URL()
 
@@ -62,7 +62,6 @@ class PropertyApp(Plotter):
         st.markdown(page_config().get('markdown'), unsafe_allow_html=True)
 
         ### Init parameters
-        self.jitter_value = 0
         self.data_loaded = True  # Variable to check if the data has been loaded
 
         if 'selected_postcode_title' not in st.session_state:
@@ -74,7 +73,11 @@ class PropertyApp(Plotter):
             self.steup_sidebar()
             self.initial_request()
 
-        self.create_plots()
+        if isinstance(self.df_pandas, pd.DataFrame):
+            if self.local_types:
+                self.create_plots()
+            else:
+                st.sidebar.error("Pas d'information disponible pour le département {} en {}. Sélectionnez une autre configuration.".format(self.selected_department, self.selected_year))
 
 
     def steup_sidebar(self):
@@ -125,8 +128,9 @@ class PropertyApp(Plotter):
 
         ### Set up the department selectbox
         departments = [str(i).zfill(2) for i in range(1, 96)]
+        departments.remove('20')
         departments.extend(['971', '972', '973', '974', '2A', '2B'])
-        default_dept = departments.index('06')
+        default_dept = departments.index('01')
         self.selected_department = st.selectbox('Département', departments, index=default_dept)
 
         # Check if the department has changed and reset the session state for the postcode if needed
@@ -141,12 +145,18 @@ class PropertyApp(Plotter):
 
         ### Set up the year selectbox
         # default_year = data_gouv_dict.get('data_gouv_years').index(data_gouv_dict.get('data_gouv_years')[-1])
-        years = [f'Vendus en {year}' for year in data_gouv_dict.get('data_gouv_years')]
+
+        years_range = data_gouv_dict.get('data_gouv_years')
+        years = [f'Vendus en {year}' for year in years_range]
+        # years.extend(['En vente 2024'])
         default_year = years.index('Vendus en 2023')        
         self.selected_year = st.selectbox('Année', years, index=default_year).split(' ')[-1]
 
         ### Load data
-        self.df_pandas = fetch_data_gouv(self.selected_department, self.selected_year)
+        if '2024' not in self.selected_year:
+            self.df_pandas = fetch_data_gouv(self.selected_department, self.selected_year)
+        else:
+            self.df_pandas = fetch_data_AzureSQL(self.selected_department)
 
         if not self.df_pandas is None:
 
@@ -154,9 +164,9 @@ class PropertyApp(Plotter):
             self.df_pandas = self.df_pandas.copy()
 
             ### Set up the property type selectbox
-            local_types = sorted(self.df_pandas['type_local'].unique())
+            self.local_types = sorted(self.df_pandas['type_local'].unique())
             selectbox_key = f'local_type_{self.selected_department}_{self.selected_year}'
-            self.selected_local_type = st.selectbox('Type de bien', local_types, key=selectbox_key)
+            self.selected_local_type = st.selectbox('Type de bien', self.local_types, key=selectbox_key)
 
             ### Set up the normalization checkbox
             self.normalize_by_area = st.checkbox('Prix au m²', True)
@@ -165,7 +175,7 @@ class PropertyApp(Plotter):
                 self.df_pandas['valeur_fonciere'] = self.df_pandas['valeur_fonciere'] / self.df_pandas['surface_reelle_bati']
 
             # Ajoutez ceci après les autres éléments dans la barre latérale
-            self.selected_plots = st.multiselect('Supprimer / ajouter des graphiques', 
+            self.selected_plots = st.multiselect('Supprimer ou ajouter des graphiques', 
                                                 ['Carte', 'Fig. 1', 'Fig. 2', 'Fig. 3', 'Fig. 4'],
                                                 ['Carte', 'Fig. 1', 'Fig. 2', 'Fig. 3', 'Fig. 4'])
 

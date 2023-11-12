@@ -2,8 +2,9 @@ import pandas as pd
 import requests
 import streamlit as st
 from io import BytesIO
+import pymssql
 
-from .config import data_URL
+from .config import data_URL, azure_credentials
 
 @st.cache_data
 def fetch_summarized_data():
@@ -24,9 +25,42 @@ def fetch_summarized_data():
 
 
 @st.cache_data
-def fetch_data_AzureSQL(selected_dept, selected_year):
+def fetch_data_AzureSQL(selected_dept):
     ### Fetch only when user changes the year
-    pass
+    cred_dict = azure_credentials()
+
+    sql_query = f"""
+        SELECT DISTINCT
+            type_local,
+            valeur_fonciere,
+            code_postal,
+            surface,
+            longitude,
+            latitude
+        FROM
+            BienIci_2024
+        WHERE
+            code_departement = '{selected_dept}' AND
+            type_local IS NOT NULL
+        """
+    
+    try:
+        # Establish a connection to the database
+        conn = pymssql.connect(server=cred_dict['server'], user=cred_dict['uid'], password=cred_dict['pwd'], database=cred_dict['database'])
+        
+        # Execute the query and store the result in a pandas DataFrame
+        df = pd.read_sql(sql_query, conn)
+        df.rename(columns={'surface': 'surface_reelle_bati'}, inplace=True)
+        print(df)
+
+        # # Close the connection
+        conn.close()
+        
+        return df
+    except Exception as e:
+        st.error("Could not connect to the database: {}".format(e))
+        return pd.DataFrame()  # Return an empty DataFrame on error
+
 
 def update_data_AzureSQL():
     ### Update request when user changes the departement
@@ -81,10 +115,8 @@ def fetch_data_gouv(selected_dept, selected_year):
                                     usecols=['type_local', 'valeur_fonciere', 'code_postal', 'surface_reelle_bati', 'longitude', 'latitude'],
                                     dtype={'code_postal': str})
         else:
-            csv_path = f'{data_URL().get("2024_merged")}/{selected_dept}.csv.gz'
-            df_pandas = pd.read_csv(csv_path, compression='gzip', header=0, sep=',', quotechar='"', low_memory=False, 
-                                        usecols=['type_local', 'valeur_fonciere', 'code_postal', 'surface_reelle_bati', 'longitude', 'latitude'],
-                                        dtype={'code_postal': str})
+            usecols = ['type_local', 'valeur_fonciere', 'code_postal', 'surface_reelle_bati']
+            df_pandas = fetch_data_AzureSQL(usecols)
 
         ### Remove rows with missing values
         df_pandas.dropna(inplace=True)
@@ -103,7 +135,7 @@ def fetch_data_gouv(selected_dept, selected_year):
             st.sidebar.error("Pas d'information disponible pour le département {} en {}. Sélectionnez une autre configuration.".format(selected_dept, selected_year))
             st.session_state.data_load_error = True
         # st.warning(e)
-        st.warning('Oups, un petit bug ici.')
+        st.warning("Les données n'ont pas pu être chargées.")
         print(e)
 
     return df_pandas

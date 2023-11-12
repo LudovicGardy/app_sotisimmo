@@ -79,12 +79,16 @@ class Plotter:
             st.divider()
 
         ### Section 4
-        if "Fig. 3" in self.selected_plots and self.selected_year not in str(data_gouv_dict.get('data_gouv_years')[0]):
+        if "Fig. 3" in self.selected_plots and int(self.selected_year) != int(data_gouv_dict.get('data_gouv_years')[0]) and int(self.selected_year) != int(data_gouv_dict.get('data_gouv_years')[-1])+1:
             st.markdown(f"""### Fig 3. Evolution des prix médians des :blue[{self.selected_local_type.lower()}s] dans le :blue[{self.selected_department}] entre :blue[{int(self.selected_year)-1}] et :blue[{self.selected_year}]""")
             self.plot_3()
-        else:
+        elif int(self.selected_year) == int(data_gouv_dict.get('data_gouv_years')[0]):
             if "Fig. 3" in self.selected_plots:
                 st.warning("Fig 3. ne peut pas être calculée car l'année sélectionnée est 2018. Or, les données de 2017 ne sont pas connues pas ce programme.")
+                st.divider()
+        elif int(self.selected_year) == int(data_gouv_dict.get('data_gouv_years')[-1]+1):
+            if "Fig. 3" in self.selected_plots:
+                st.warning("Fig 3. ne peut pas être calculée pour l'année 2024.")
                 st.divider()
 
         ### Section 5
@@ -112,7 +116,6 @@ class Plotter:
             self.use_fixed_marker_size = st.checkbox("Fixer la taille des points", False)
 
             self.use_jitter = st.checkbox("Eviter la superposition des points", True)
-            self.jitter_value = 0 #0.001       
 
             self.remove_outliers = st.checkbox("Supprimer les valeurs extrêmes", True)
             st.caption("""Retirer les valeurs extrêmes (>1.5*IQR) permet d'améliorer la lisibilité de la carte.
@@ -121,6 +124,11 @@ class Plotter:
         if self.selected_year == data_gouv_dict.get('data_gouv_years')[-1]+1 and not self.use_jitter:
             st.success(f"""💡 Pour une meilleure visibilité des données géographiques de {data_gouv_dict.get('data_gouv_years')[-1]+1}, il est conseillé de cocher la case
                         'Eviter la superposition des points' ci-dessus.""")
+
+        if not self.use_jitter:
+            self.jitter_value = 0
+        else:
+            self.jitter_value = 0.01
 
         # Filtring the dataframe by property type
         filtered_df = self.df_pandas[self.df_pandas['type_local'] == self.selected_local_type]
@@ -139,13 +147,7 @@ class Plotter:
             # Filter out outliers based on the upper fence
             filtered_df = filtered_df[filtered_df['valeur_fonciere'] <= upper_fence]
 
-        # (Optional) Jittering : add a small random value to the coordinates to avoid overlapping markers
-        if int(self.selected_year.split(" ")[-1]) == {data_gouv_dict.get('data_gouv_years')[-1]+1}:
-            val = 0.1
-        else:
-            val = 0 #0.001
-
-        self.jitter_value = val if self.use_jitter else 0
+        # self.jitter_value = val if self.use_jitter else 0
         filtered_df['longitude'] = filtered_df['longitude'].astype(float)
         filtered_df['latitude'] = filtered_df['latitude'].astype(float)
         filtered_df.loc[:, 'latitude'] = filtered_df['latitude'] + np.random.uniform(-self.jitter_value, self.jitter_value, size=len(filtered_df))
@@ -278,9 +280,9 @@ class Plotter:
                 annual_average_diff, percentage_diff = calculate_median_difference(self.summarized_df_pandas, self.selected_department, self.normalize_by_area, local_type, self.selected_year)
                 with cols[idx]:
                     if annual_average_diff > 0:
-                        st.metric(label=local_type, value=f"+{annual_average_diff:.2f} € / an", delta=f"{percentage_diff:.2f} % depuis {int(self.selected_year)-1}")
+                        st.metric(label=local_type, value=f"+{annual_average_diff:.2f} €", delta=f"{percentage_diff:.2f} % depuis {int(self.selected_year)-1}")
                     else:
-                        st.metric(label=local_type, value=f"{annual_average_diff:.2f} € / an", delta=f"{percentage_diff:.2f} % depuis {int(self.selected_year)-1}")
+                        st.metric(label=local_type, value=f"{annual_average_diff:.2f} €", delta=f"{percentage_diff:.2f} % depuis {int(self.selected_year)-1}")
 
                     prop_data = dept_data[dept_data['type_local'] == local_type]
 
@@ -319,9 +321,9 @@ class Plotter:
 
                 with cols[idx]:
                     if annual_average_diff > 0:
-                        st.metric(label=local_type, value=f"+{annual_average_diff:.2f} € / an", delta=f"{percentage_diff:.2f} % depuis {data_gouv_dict.get('data_gouv_years')[0]}")
+                        st.metric(label=local_type, value=f"+{annual_average_diff:.2f} €", delta=f"{percentage_diff:.2f} % depuis {data_gouv_dict.get('data_gouv_years')[0]}")
                     else:
-                        st.metric(label=local_type, value=f"{annual_average_diff:.2f} € / an", delta=f"{percentage_diff:.2f} % depuis {data_gouv_dict.get('data_gouv_years')[0]}")
+                        st.metric(label=local_type, value=f"{annual_average_diff:.2f} €", delta=f"{percentage_diff:.2f} % depuis {data_gouv_dict.get('data_gouv_years')[0]}")
 
             fig = px.line(dept_data, 
                           x='Year', 
