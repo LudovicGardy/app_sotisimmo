@@ -26,6 +26,9 @@ def fetch_summarized_data():
 
 @st.cache_data
 def fetch_data_AzureSQL(selected_dept):
+
+    print("Fetching data from Azure SQL... Year: 2024, Department: {}".format(selected_dept))
+
     ### Fetch only when user changes the year
     cred_dict = azure_credentials()
 

@@ -29,6 +29,12 @@ if cred_dict:
 else:
     print("No credentials were found. Analytics will not be tracked.")
 
+### Set page config
+st.set_page_config(page_title=page_config().get('page_title'), 
+                    page_icon = page_config().get('page_icon'),  
+                    layout = page_config().get('layout'),
+                    initial_sidebar_state = page_config().get('initial_sidebar_state'))
+
 ### App
 class PropertyApp(Plotter):
     '''
@@ -54,11 +60,7 @@ class PropertyApp(Plotter):
         
         print("Init the app...")
 
-        ### Set page config
-        st.set_page_config(page_title=page_config().get('page_title'), 
-                            page_icon = page_config().get('page_icon'),  
-                            layout = page_config().get('layout'),
-                            initial_sidebar_state = page_config().get('initial_sidebar_state'))
+
         st.markdown(page_config().get('markdown'), unsafe_allow_html=True)
 
         ### Init parameters
@@ -78,7 +80,6 @@ class PropertyApp(Plotter):
                 self.create_plots()
             else:
                 st.sidebar.error("Pas d'information disponible pour le département {} en {}. Sélectionnez une autre configuration.".format(self.selected_department, self.selected_year))
-
 
     def steup_sidebar(self):
         '''

@@ -2,6 +2,51 @@ from dotenv import dotenv_values
 import os
 import numpy as np
 
+### CONFIGURATION ###
+def page_config():
+    '''
+    Set the page configuration (title, favicon, layout, etc.)
+    '''
+
+    cred_dict = AWS_credentials()
+
+    page_dict = {
+        'page_title': 'Sotis Immobilier',
+        'subtitle': 'Prédictions de prix immobiliers',
+        'description': 'Sotis Immobilier est une application web qui permet de prédire les prix immobiliers en France.',
+        'author': 'Sotis AI',
+        'page_icon': f'{cred_dict["AWS_S3_URL"]}/Sotis_AI_pure_darkbg_240px.ico',
+        'page_logo': f'{cred_dict["AWS_S3_URL"]}/Sotis_AI_pure_darkbg_240px.png',
+        'layout': 'wide',
+        'initial_sidebar_state': 'auto',
+        'markdown': '''
+                    <style>
+                        .css-10pw50 {
+                            visibility:hidden;
+                        }
+                    </style>
+                    ''',
+    }
+
+    return page_dict
+
+def data_URL():
+    '''
+    Set the URLs to the data sources.
+    '''
+
+    cred_dict = AWS_credentials()
+
+    data_dict = {
+        'summarized_data_url': f'{cred_dict["AWS_S3_URL"]}/geo_dvf_summarized_full.csv.gz',
+        'data_gouv': 'https://files.data.gouv.fr/geo-dvf/latest/csv',
+        'data_gouv_years': list(np.arange(2018,2023+1)),
+        '2024_merged': f'{cred_dict["AWS_S3_URL"]}/2024_merged/departements',
+    }
+
+    return data_dict
+
+### CREDENTIALS ###
 def firebase_credentials():
     '''
     Load configuration from .env file or from OS environment variables
@@ -102,46 +147,3 @@ def AWS_credentials():
         cred_dict = {}  # Reset cred_dict if any key is missing or empty
 
     return cred_dict
-
-def page_config():
-    '''
-    Set the page configuration (title, favicon, layout, etc.)
-    '''
-
-    cred_dict = AWS_credentials()
-
-    page_dict = {
-        'page_title': 'Sotis Immobilier',
-        'subtitle': 'Prédictions de prix immobiliers',
-        'description': 'Sotis Immobilier est une application web qui permet de prédire les prix immobiliers en France.',
-        'author': 'Sotis AI',
-        'page_icon': f'{cred_dict["AWS_S3_URL"]}/Sotis_AI_pure_darkbg_240px.ico',
-        'page_logo': f'{cred_dict["AWS_S3_URL"]}/Sotis_AI_pure_darkbg_240px.png',
-        'layout': 'wide',
-        'initial_sidebar_state': 'auto',
-        'markdown': '''
-                    <style>
-                        .css-10pw50 {
-                            visibility:hidden;
-                        }
-                    </style>
-                    ''',
-    }
-
-    return page_dict
-
-def data_URL():
-    '''
-    Set the URLs to the data sources.
-    '''
-
-    cred_dict = AWS_credentials()
-
-    data_dict = {
-        'summarized_data_url': f'{cred_dict["AWS_S3_URL"]}/geo_dvf_summarized_full.csv.gz',
-        'data_gouv': 'https://files.data.gouv.fr/geo-dvf/latest/csv',
-        'data_gouv_years': list(np.arange(2018,2023+1)),
-        '2024_merged': f'{cred_dict["AWS_S3_URL"]}/2024_merged/departements',
-    }
-
-    return data_dict
