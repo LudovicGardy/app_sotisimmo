@@ -38,7 +38,7 @@ def fetch_data_AzureSQL(selected_dept):
             longitude,
             latitude
         FROM
-            BienIci_2024
+            {cred_dict['AZURE_TABLE']}
         WHERE
             code_departement = '{selected_dept}' AND
             type_local IS NOT NULL
@@ -46,20 +46,24 @@ def fetch_data_AzureSQL(selected_dept):
     
     try:
         # Establish a connection to the database
-        conn = pymssql.connect(server=cred_dict['server'], user=cred_dict['uid'], password=cred_dict['pwd'], database=cred_dict['database'])
+        conn = pymssql.connect(server=cred_dict['AZURE_SERVER'], user=cred_dict['AZURE_UID'], password=cred_dict['AZURE_PWD'], database=cred_dict['AZURE_DATABASE'])
         
         # Execute the query and store the result in a pandas DataFrame
         df = pd.read_sql(sql_query, conn)
         df.rename(columns={'surface': 'surface_reelle_bati'}, inplace=True)
-        print(df)
 
         # # Close the connection
         conn.close()
         
         return df
+
     except Exception as e:
-        st.error("Could not connect to the database: {}".format(e))
-        return pd.DataFrame()  # Return an empty DataFrame on error
+        if df is None:
+            st.sidebar.error("Pas d'information disponible pour le département {} en {}. Sélectionnez une autre configuration.".format(selected_dept, selected_year))
+            st.session_state.data_load_error = True
+        # st.warning(e)
+        st.warning("Les données n'ont pas pu être chargées.")
+        print(e)
 
 
 def update_data_AzureSQL():

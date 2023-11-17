@@ -44,13 +44,62 @@ def firebase_credentials():
 
 def azure_credentials():
 
-    cred_dict = {
-        'server': 'serveur-oct-2023.database.windows.net',
-        'database': 'SotisImmo_DB',
-        'uid': 'root_gardy',
-        'pwd': 'Tagazok123',
-        'table': 'BienIci'
-    }
+    keys_list = [
+        'AZURE_SERVER', 'AZURE_DATABASE', 'AZURE_UID', 'AZURE_PWD', 'AZURE_TABLE'
+    ]
+
+    cred_dict = {}
+    try:
+        # Try to load environment variables from the .env file
+        print('\n\nSearching in local environment variables (.env file)...')
+        config = dotenv_values('.env')
+        source = config if config else os.environ
+    except Exception as e:
+        # Fallback to OS environment variables if .env file is not found
+        print('\n\nNo .env file was found or an error occurred:', str(e))
+        print('Searching in OS environment variables...')
+        source = os.environ
+
+    # Check if all required keys exist and have a non-empty value
+    try:
+        for key in keys_list:
+            value = source.get(key.upper())
+            if not value:
+                raise ValueError(f'Missing or empty value for key: {key}')
+            cred_dict[key] = value
+    except ValueError as e:
+        print(f'Configuration error: {e}')
+        cred_dict = {}  # Reset cred_dict if any key is missing or empty
+
+    return cred_dict
+
+def AWS_credentials():
+    keys_list = [
+        'AWS_S3_URL'
+    ]
+
+    cred_dict = {}
+    try:
+        # Try to load environment variables from the .env file
+        print('\n\nSearching in local environment variables (.env file)...')
+        config = dotenv_values('.env')
+        source = config if config else os.environ
+    except Exception as e:
+        # Fallback to OS environment variables if .env file is not found
+        print('\n\nNo .env file was found or an error occurred:', str(e))
+        print('Searching in OS environment variables...')
+        source = os.environ
+
+    # Check if all required keys exist and have a non-empty value
+    try:
+        for key in keys_list:
+            value = source.get(key.upper())
+            if not value:
+                raise ValueError(f'Missing or empty value for key: {key}')
+            cred_dict[key] = value
+    except ValueError as e:
+        print(f'Configuration error: {e}')
+        cred_dict = {}  # Reset cred_dict if any key is missing or empty
 
     return cred_dict
 
@@ -59,13 +108,15 @@ def page_config():
     Set the page configuration (title, favicon, layout, etc.)
     '''
 
+    cred_dict = AWS_credentials()
+
     page_dict = {
         'page_title': 'Sotis Immobilier',
         'subtitle': 'Prédictions de prix immobiliers',
         'description': 'Sotis Immobilier est une application web qui permet de prédire les prix immobiliers en France.',
         'author': 'Sotis AI',
-        'page_icon': 'https://sotisimmo.s3.eu-north-1.amazonaws.com/Sotis_AI_pure_darkbg_240px.ico',
-        'page_logo': 'https://sotisimmo.s3.eu-north-1.amazonaws.com/Sotis_AI_pure_darkbg_240px.png',
+        'page_icon': f'{cred_dict["AWS_S3_URL"]}/Sotis_AI_pure_darkbg_240px.ico',
+        'page_logo': f'{cred_dict["AWS_S3_URL"]}/Sotis_AI_pure_darkbg_240px.png',
         'layout': 'wide',
         'initial_sidebar_state': 'auto',
         'markdown': '''
@@ -84,11 +135,13 @@ def data_URL():
     Set the URLs to the data sources.
     '''
 
+    cred_dict = AWS_credentials()
+
     data_dict = {
-        'summarized_data_url': 'https://sotisimmo.s3.eu-north-1.amazonaws.com/geo_dvf_summarized_full.csv.gz',
+        'summarized_data_url': f'{cred_dict["AWS_S3_URL"]}/geo_dvf_summarized_full.csv.gz',
         'data_gouv': 'https://files.data.gouv.fr/geo-dvf/latest/csv',
         'data_gouv_years': list(np.arange(2018,2023+1)),
-        '2024_merged': 'https://sotisimmo.s3.eu-north-1.amazonaws.com/2024_merged/departements',
+        '2024_merged': f'{cred_dict["AWS_S3_URL"]}/2024_merged/departements',
     }
 
     return data_dict

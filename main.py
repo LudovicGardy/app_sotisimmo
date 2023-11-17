@@ -130,7 +130,7 @@ class PropertyApp(Plotter):
         departments = [str(i).zfill(2) for i in range(1, 96)]
         departments.remove('20')
         departments.extend(['971', '972', '973', '974', '2A', '2B'])
-        default_dept = departments.index('01')
+        default_dept = departments.index('06')
         self.selected_department = st.selectbox('Département', departments, index=default_dept)
 
         # Check if the department has changed and reset the session state for the postcode if needed
@@ -150,6 +150,7 @@ class PropertyApp(Plotter):
         years = [f'Vendus en {year}' for year in years_range]
         # years.extend(['En vente 2024'])
         default_year = years.index('Vendus en 2023')        
+        # default_year = years.index('En vente 2024')        
         self.selected_year = st.selectbox('Année', years, index=default_year).split(' ')[-1]
 
         ### Load data
