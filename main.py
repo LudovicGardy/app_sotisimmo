@@ -39,10 +39,6 @@ st.set_page_config(page_title=page_config().get('page_title'),
 class PropertyApp(Plotter):
     '''
     This class creates a Streamlit app that displays the average price of real estate properties in France, by department.
-    The data is loaded from the French open data portal (https://www.data.gouv.fr/fr/), and the app is built with Streamlit.
-    The app is not optimized for mobile devices, and the data is limited to the years 2018-2023. A new version will be released
-    in the future, with more features and a better user experience. A streaming version of the app will come soon as well, with
-    a Kafka cluster and a Spark Streaming job. Stay tuned! 
 
     Parameters
     ----------
@@ -145,13 +141,14 @@ class PropertyApp(Plotter):
         st.session_state.previous_selected_department = self.selected_department
 
         ### Set up the year selectbox
-        # default_year = data_gouv_dict.get('data_gouv_years').index(data_gouv_dict.get('data_gouv_years')[-1])
-
         years_range = data_gouv_dict.get('data_gouv_years')
         years = [f'Vendus en {year}' for year in years_range]
-        # years.extend(['En vente 2024'])
-        default_year = years.index('Vendus en 2023')        
-        # default_year = years.index('En vente 2024')        
+        default_year = years.index('Vendus en 2023')      
+
+        # if True: # Tests
+        #     years.extend(['En vente 2024'])
+        #     default_year = years.index('En vente 2024')   
+            
         self.selected_year = st.selectbox('Année', years, index=default_year).split(' ')[-1]
 
         ### Load data
