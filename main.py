@@ -14,16 +14,17 @@ import json
 import sys
 
 ### Relative imports
-from modules.config import firebase_credentials, page_config, data_URL
-from modules.plots import Plotter
+from modules.config import firebase_credentials, page_config, data_URL, azure_credentials
 from modules.data_loader import fetch_summarized_data, fetch_data_gouv, fetch_data_AzureSQL
-cred_dict = firebase_credentials()
+from modules.plots import Plotter
+firebase_cred = firebase_credentials()
+azure_cred = azure_credentials()
 data_gouv_dict = data_URL()
 
-if cred_dict:
+if firebase_cred:
     ### Secure way to store the firestore keys and provide them to start_tracking
     tfile = tempfile.NamedTemporaryFile(mode='w+')
-    json.dump(cred_dict, tfile)
+    json.dump(firebase_cred, tfile)
     tfile.flush()
     streamlit_analytics.start_tracking(firestore_key_file=tfile.name, firestore_collection_name='sotisimmo_analytics')
 else:
@@ -155,7 +156,7 @@ class PropertyApp(Plotter):
         if '2024' not in self.selected_year:
             self.df_pandas = fetch_data_gouv(self.selected_department, self.selected_year)
         else:
-            self.df_pandas = fetch_data_AzureSQL(self.selected_department)
+            self.df_pandas = fetch_data_AzureSQL(selected_dept=self.selected_department, cred_dict=azure_cred)
 
         if not self.df_pandas is None:
 
@@ -178,7 +179,7 @@ class PropertyApp(Plotter):
                                                 ['Carte', 'Fig. 1', 'Fig. 2', 'Fig. 3', 'Fig. 4'],
                                                 ['Carte', 'Fig. 1', 'Fig. 2', 'Fig. 3', 'Fig. 4'])
 
-if cred_dict:
+if firebase_cred:
     streamlit_analytics.stop_tracking(firestore_key_file=tfile.name, firestore_collection_name='sotisimmo_analytics')
 
 if __name__ == '__main__':

@@ -4,7 +4,8 @@ import streamlit as st
 from io import BytesIO
 import pymssql
 
-from .config import data_URL, azure_credentials
+from .config import data_URL
+from .decorators import sql_cloud_connection
 
 @st.cache_data
 def fetch_summarized_data():
@@ -23,14 +24,10 @@ def fetch_summarized_data():
     
     return summarized_df_pandas
 
-
+@sql_cloud_connection
 @st.cache_data
-def fetch_data_AzureSQL(selected_dept):
-
+def fetch_data_AzureSQL(_conn, selected_dept, cred_dict=None):
     print("Fetching data from Azure SQL... Year: 2024, Department: {}".format(selected_dept))
-
-    ### Fetch only when user changes the year
-    cred_dict = azure_credentials()
 
     sql_query = f"""
         SELECT DISTINCT
@@ -48,16 +45,9 @@ def fetch_data_AzureSQL(selected_dept):
         """
     
     try:
-        # Establish a connection to the database
-        conn = pymssql.connect(server=cred_dict['AZURE_SERVER'], user=cred_dict['AZURE_UID'], password=cred_dict['AZURE_PWD'], database=cred_dict['AZURE_DATABASE'])
-        
         # Execute the query and store the result in a pandas DataFrame
-        df = pd.read_sql(sql_query, conn)
+        df = pd.read_sql(sql_query, _conn)
         df.rename(columns={'surface': 'surface_reelle_bati'}, inplace=True)
-
-        # # Close the connection
-        conn.close()
-        
         return df
 
     except Exception as e:
@@ -68,10 +58,6 @@ def fetch_data_AzureSQL(selected_dept):
         st.warning("Les données n'ont pas pu être chargées.")
         print(e)
 
-
-def update_data_AzureSQL():
-    ### Update request when user changes the departement
-    pass
 
 ### Load data 
 @st.cache_data
