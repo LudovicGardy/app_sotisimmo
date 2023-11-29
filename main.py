@@ -180,25 +180,20 @@ class PropertyApp(Plotter):
             
             ### Set up the chatbot
             st.divider()
-            st.markdown('## Chatbot (Optionnel)')
+            with st.expander("Chatbot (Optionnel)"):
 
-            self.chatbot_checkbox = st.checkbox('Activer le chat bot', False)
-
-            col1, col2 = st.columns([1, 1])
-
-            with col1:
+                self.chatbot_checkbox = st.checkbox('Activer le chat bot', False)
                 self.gpt_version = st.selectbox('Modèle', ["GPT 3.5", "GPT 4", "Llama2-7B", "Llama2-13B", "Mistral"], index=1)
-            with col2:
                 self.openai_api_key = st.text_input("Entrez une clé API", type="password")
 
-            if self.chatbot_checkbox and not self.openai_api_key:
-                if "GPT" in self.gpt_version:
-                    st.warning('⚠️ Entrez une clé API **Open AI**.')
-                else:
-                    st.warning('⚠️ Entrez une clé API **Repliacte**.')
-                # st.stop()
+                if self.chatbot_checkbox and not self.openai_api_key:
+                    if "GPT" in self.gpt_version:
+                        st.warning('⚠️ Entrez une clé API **Open AI**.')
+                    else:
+                        st.warning('⚠️ Entrez une clé API **Repliacte**.')
+                    # st.stop()
 
-            # st.markdown('Pour obtenir une clé API, rendez-vous sur le site de [openAI](https://platform.openai.com/api-keys).')
+                # st.markdown('Pour obtenir une clé API, rendez-vous sur le site de [openAI](https://platform.openai.com/api-keys).')
 
 if firebase_cred:
     streamlit_analytics.stop_tracking(firestore_key_file=tfile.name, firestore_collection_name='sotisimmo_analytics')
