@@ -31,6 +31,7 @@ def page_config():
         'subtitle': 'Prédictions de prix immobiliers',
         'description': 'Sotis Immobilier est une application web qui permet de prédire les prix immobiliers en France.',
         'author': 'Sotis AI',
+        'base': 'dark',
         'page_icon': f'{env_variables["AWS_S3_URL"]}/Sotis_AI_pure_darkbg_240px.ico',
         'page_logo': f'{env_variables["AWS_S3_URL"]}/Sotis_AI_pure_darkbg_240px.png',
         'layout': 'wide',

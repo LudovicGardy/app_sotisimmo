@@ -7,3 +7,4 @@ streamlit-analytics
 google-cloud-firestore
 python-dotenv
 pymssql
+openai

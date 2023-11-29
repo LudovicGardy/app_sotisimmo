@@ -97,7 +97,6 @@ class PropertyApp(Plotter):
                    \nRendez-vous sur https://www.sotisanalytics.com pour en savoir plus, signaler un problème, une idée ou pour me contacter. Bonne visite ! 
                    \nSotis A.I.© 2023''')
 
-
         st.divider()
 
     def initial_request(self):
@@ -178,6 +177,21 @@ class PropertyApp(Plotter):
             self.selected_plots = st.multiselect('Supprimer ou ajouter des graphiques', 
                                                 ['Carte', 'Fig. 1', 'Fig. 2', 'Fig. 3', 'Fig. 4'],
                                                 ['Carte', 'Fig. 1', 'Fig. 2', 'Fig. 3', 'Fig. 4'])
+            
+            ### Set up the chatbot
+            st.divider()
+            st.markdown('## Chatbot (Optionnel)')
+
+            self.chatbot_checkbox = st.checkbox('Activer le chat bot', False)
+
+            col1, col2 = st.columns([1, 1])
+
+            with col1:
+                self.gpt_version = st.selectbox('GPT version', [3.5, 4], index=1)
+            with col2:
+                self.openai_api_key = st.text_input("Entrez une clé API", type="password")
+
+            st.markdown('Pour obtenir une clé API, rendez-vous sur le site de [openAI](https://platform.openai.com/api-keys).')
 
 if firebase_cred:
     streamlit_analytics.stop_tracking(firestore_key_file=tfile.name, firestore_collection_name='sotisimmo_analytics')
