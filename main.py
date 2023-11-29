@@ -187,15 +187,18 @@ class PropertyApp(Plotter):
             col1, col2 = st.columns([1, 1])
 
             with col1:
-                self.gpt_version = st.selectbox('GPT version', [3.5, 4], index=1)
+                self.gpt_version = st.selectbox('Modèle', ["GPT 3.5", "GPT 4", "Llama2-7B", "Llama2-13B", "Mistral"], index=1)
             with col2:
                 self.openai_api_key = st.text_input("Entrez une clé API", type="password")
 
             if self.chatbot_checkbox and not self.openai_api_key:
-                st.warning('⚠️ Veuillez entrer une clé API.')
+                if "GPT" in self.gpt_version:
+                    st.warning('⚠️ Entrez une clé API **Open AI**.')
+                else:
+                    st.warning('⚠️ Entrez une clé API **Repliacte**.')
                 # st.stop()
 
-            st.markdown('Pour obtenir une clé API, rendez-vous sur le site de [openAI](https://platform.openai.com/api-keys).')
+            # st.markdown('Pour obtenir une clé API, rendez-vous sur le site de [openAI](https://platform.openai.com/api-keys).')
 
 if firebase_cred:
     streamlit_analytics.stop_tracking(firestore_key_file=tfile.name, firestore_collection_name='sotisimmo_analytics')
