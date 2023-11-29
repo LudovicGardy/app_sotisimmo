@@ -191,6 +191,10 @@ class PropertyApp(Plotter):
             with col2:
                 self.openai_api_key = st.text_input("Entrez une clé API", type="password")
 
+            if self.chatbot_checkbox and not self.openai_api_key:
+                st.warning('⚠️ Veuillez entrer une clé API.')
+                # st.stop()
+
             st.markdown('Pour obtenir une clé API, rendez-vous sur le site de [openAI](https://platform.openai.com/api-keys).')
 
 if firebase_cred:

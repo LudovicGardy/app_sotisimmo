@@ -47,11 +47,6 @@ class Plotter:
                     immobilières effectuées entre {data_gouv_dict.get('data_gouv_years')[0]} et {data_gouv_dict.get('data_gouv_years')[-1]}.
         """)
 
-        ### Section 0
-        if self.chatbot_checkbox:
-            st.markdown("## ChatGPT-like clone")
-            self.chat_bot()
-
         ### Section 1
         if "Carte" in self.selected_plots:
             # Afficher l'alerte si l'année sélectionnée est 2024
@@ -109,6 +104,11 @@ class Plotter:
             self.plot_4_widgets()
             self.plot_4()
 
+        ### Section 6
+        if self.chatbot_checkbox:
+            st.markdown("### ChatGPT-like clone")
+            self.chat_bot()
+
     def chat_bot(self):
 
         # Filtring the dataframe by property type
@@ -127,7 +127,7 @@ class Plotter:
             with st.chat_message(message["role"]):
                 st.markdown(message["content"])
 
-        if prompt := st.chat_input("What is up?"):
+        if prompt := st.chat_input("Message ChatGPT-like clone"):
             st.session_state.messages.append({"role": "user", "content": prompt})
             with st.chat_message("user"):
                 st.markdown(prompt)
@@ -162,8 +162,8 @@ class Plotter:
                     message_placeholder.markdown(full_response)
                 st.session_state.messages.append({"role": "assistant", "content": full_response})
 
-        if st.button("Clear chat"):
-            st.session_state.messages = []
+        # if st.button("Clear chat"):
+        #     st.session_state.messages = []
 
     def plot_map_widgets(self):
         print("Creating map...")
