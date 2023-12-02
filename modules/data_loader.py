@@ -1,11 +1,13 @@
 import pandas as pd
 import requests
 import streamlit as st
+import json
+import os
 from io import BytesIO
-import pymssql
+from google.cloud import bigquery
+from google.oauth2 import service_account
 
-from .config import data_URL
-from .decorators import sql_cloud_connection
+from .config import data_URL, load_configurations
 
 @st.cache_data
 def fetch_summarized_data():
@@ -24,10 +26,23 @@ def fetch_summarized_data():
     
     return summarized_df_pandas
 
-@sql_cloud_connection
 @st.cache_data
-def fetch_data_AzureSQL(_conn, selected_dept, cred_dict=None):
-    print("Fetching data from Azure SQL... Year: 2024, Department: {}".format(selected_dept))
+def fetch_data_BigQuery(_cred_dict, selected_dept):
+    print(f"Fetching data from BigQuery... Year: 2024, Department: {selected_dept}")
+
+    env_variables = load_configurations()
+
+    # Créer un fichier JSON temporaire pour stocker les credentials et les envoyer à BigQuery
+    credentials_path = 'temp_credentials.json'
+    with open(credentials_path, 'w') as credentials_file:
+        json.dump(_cred_dict, credentials_file)
+
+    # Utiliser le fichier JSON temporaire pour créer les credentials
+    credentials = service_account.Credentials.from_service_account_file(credentials_path)
+    client = bigquery.Client(credentials=credentials, project=_cred_dict["project_id"])
+
+    # Supprimer le fichier temporaire après utilisation
+    os.remove(credentials_path)
 
     sql_query = f"""
         SELECT DISTINCT
@@ -38,26 +53,21 @@ def fetch_data_AzureSQL(_conn, selected_dept, cred_dict=None):
             longitude,
             latitude
         FROM
-            {cred_dict['AZURE_TABLE']}
+            `{env_variables.get('BIGQUERY_PROJECT_ID')}.{env_variables.get('BIGQUERY_DATASET_ID')}.{env_variables.get('BIGQUERY_TABLE')}`
         WHERE
             code_departement = '{selected_dept}' AND
             type_local IS NOT NULL
-        """
-    
+    """
+
     try:
-        # Execute the query and store the result in a pandas DataFrame
-        df = pd.read_sql(sql_query, _conn)
+        # Exécutez la requête et stockez le résultat dans un DataFrame Pandas
+        df = client.query(sql_query).to_dataframe()
         df.rename(columns={'surface': 'surface_reelle_bati'}, inplace=True)
         return df
 
     except Exception as e:
-        if df is None:
-            st.sidebar.error("Pas d'information disponible pour le département {} en {}. Sélectionnez une autre configuration.".format(selected_dept, selected_year))
-            st.session_state.data_load_error = True
-        # st.warning(e)
-        st.warning("Les données n'ont pas pu être chargées.")
+        st.warning("Les données n'ont pas pu être chargées depuis BigQuery.")
         print(e)
-
 
 ### Load data 
 @st.cache_data
@@ -95,21 +105,17 @@ def fetch_data_gouv(selected_dept, selected_year):
 
     # Data from government are available only for the years 2018-2022
     try:
-        if int(selected_year) < 2024:
-            ### Download data from the French open data portal
-            url = f'{data_URL().get("data_gouv")}/{selected_year}/departements/{selected_dept}.csv.gz'
-            response = requests.get(url)
+        ### Download data from the French open data portal
+        url = f'{data_URL().get("data_gouv")}/{selected_year}/departements/{selected_dept}.csv.gz'
+        response = requests.get(url)
 
-            ### Store data in a buffer
-            buffer = BytesIO(response.content)
+        ### Store data in a buffer
+        buffer = BytesIO(response.content)
 
-            ### Load data into a Pandas dataframe
-            df_pandas = pd.read_csv(buffer, compression='gzip', header=0, sep=',', quotechar='"', low_memory=False, 
-                                    usecols=['type_local', 'valeur_fonciere', 'code_postal', 'surface_reelle_bati', 'longitude', 'latitude'],
-                                    dtype={'code_postal': str})
-        else:
-            usecols = ['type_local', 'valeur_fonciere', 'code_postal', 'surface_reelle_bati']
-            df_pandas = fetch_data_AzureSQL(usecols)
+        ### Load data into a Pandas dataframe
+        df_pandas = pd.read_csv(buffer, compression='gzip', header=0, sep=',', quotechar='"', low_memory=False, 
+                                usecols=['type_local', 'valeur_fonciere', 'code_postal', 'surface_reelle_bati', 'longitude', 'latitude'],
+                                dtype={'code_postal': str})
 
         ### Remove rows with missing values
         df_pandas.dropna(inplace=True)

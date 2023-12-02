@@ -1,6 +1,7 @@
 import numpy as np
 import os
 from dotenv import load_dotenv, find_dotenv
+from google.oauth2 import service_account
 
 def load_configurations():
     """
@@ -94,6 +95,25 @@ def firebase_credentials():
         cred_dict = {}  # Reset cred_dict if any key is missing or empty
 
     return cred_dict
+
+def bigquery_credentials():
+    env_variables = load_configurations()
+
+    # Configuration de l'authentification avec variables d'environnement
+    credentials_dict = {
+        "type": env_variables.get('BIGQUERY_TYPE'),
+        "project_id": env_variables.get('BIGQUERY_PROJECT_ID'),
+        "private_key_id": env_variables.get('BIGQUERY_PRIVATE_KEY_ID'),
+        "private_key": env_variables.get('BIGQUERY_PRIVATE_KEY').replace("/breakline/", "\n"),
+        "client_email": env_variables.get('BIGQUERY_CLIENT_EMAIL'),
+        "client_id": env_variables.get('BIGQUERY_CLIENT_ID'),
+        "auth_uri": env_variables.get('BIGQUERY_AUTH_URI'),
+        "token_uri": env_variables.get('BIGQUERY_TOKEN_URI'),
+        "auth_provider_x509_cert_url": env_variables.get('ABIGQUERY_UTH_PROVIDER_X509_CERT_URL'),
+        "client_x509_cert_url": env_variables.get('BIGQUERY_CLIENT_X509_CERT_URL')
+    }
+
+    return credentials_dict
 
 def azure_credentials():
 

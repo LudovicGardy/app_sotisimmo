@@ -14,11 +14,12 @@ import json
 import sys
 
 ### Relative imports
-from modules.config import firebase_credentials, page_config, data_URL, azure_credentials
-from modules.data_loader import fetch_summarized_data, fetch_data_gouv, fetch_data_AzureSQL
+from modules.config import firebase_credentials, page_config, data_URL, azure_credentials, bigquery_credentials
+from modules.data_loader import fetch_summarized_data, fetch_data_gouv, fetch_data_BigQuery
 from modules.plots import Plotter
 firebase_cred = firebase_credentials()
 azure_cred = azure_credentials()
+bigquery_cred = bigquery_credentials()
 data_gouv_dict = data_URL()
 
 if firebase_cred:
@@ -145,9 +146,9 @@ class PropertyApp(Plotter):
         years = [f'Vendus en {year}' for year in years_range]
         default_year = years.index('Vendus en 2023')      
 
-        # if True: # Tests
-        #     years.extend(['En vente 2024'])
-        #     default_year = years.index('En vente 2024')   
+        if True: # Tests
+            years.extend(['En vente 2024'])
+            default_year = years.index('En vente 2024')   
             
         self.selected_year = st.selectbox('Année', years, index=default_year).split(' ')[-1]
 
@@ -155,7 +156,7 @@ class PropertyApp(Plotter):
         if '2024' not in self.selected_year:
             self.df_pandas = fetch_data_gouv(self.selected_department, self.selected_year)
         else:
-            self.df_pandas = fetch_data_AzureSQL(selected_dept=self.selected_department, cred_dict=azure_cred)
+            self.df_pandas = fetch_data_BigQuery(bigquery_cred, self.selected_department)
 
         if not self.df_pandas is None:
 
@@ -171,7 +172,7 @@ class PropertyApp(Plotter):
             self.normalize_by_area = st.checkbox('Prix au m²', True)
             
             if self.normalize_by_area:
-                self.df_pandas['valeur_fonciere'] = self.df_pandas['valeur_fonciere'] / self.df_pandas['surface_reelle_bati']
+                self.df_pandas['valeur_fonciere'] = (self.df_pandas['valeur_fonciere'] / self.df_pandas['surface_reelle_bati']).round().astype(int)
 
             # Ajoutez ceci après les autres éléments dans la barre latérale
             self.selected_plots = st.multiselect('Supprimer ou ajouter des graphiques', 
@@ -183,11 +184,11 @@ class PropertyApp(Plotter):
             with st.expander("Chatbot (Optionnel)"):
 
                 self.chatbot_checkbox = st.checkbox('Activer le chat bot', False)
-                self.gpt_version = st.selectbox('Modèle', ["GPT 3.5", "GPT 4", "Llama2-7B", "Llama2-13B", "Mistral"], index=1)
-                self.openai_api_key = st.text_input("Entrez une clé API", type="password")
+                self.selected_model = st.selectbox('Modèle', ["GPT 3.5", "GPT 4", "Llama2-7B", "Llama2-13B", "Mistral"], index=1)
+                self.model_api_key = st.text_input("Entrez une clé API 🔑", type="password", help="You can get your API key from https://platform.openai.com/account/api-keys.")
 
-                if self.chatbot_checkbox and not self.openai_api_key:
-                    if "GPT" in self.gpt_version:
+                if self.chatbot_checkbox and not self.model_api_key:
+                    if "GPT" in self.selected_model:
                         st.warning('⚠️ Entrez une clé API **Open AI**.')
                     else:
                         st.warning('⚠️ Entrez une clé API **Repliacte**.')
