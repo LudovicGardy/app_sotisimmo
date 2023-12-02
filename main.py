@@ -146,9 +146,9 @@ class PropertyApp(Plotter):
         years = [f'Vendus en {year}' for year in years_range]
         default_year = years.index('Vendus en 2023')      
 
-        if True: # Tests
-            years.extend(['En vente 2024'])
-            default_year = years.index('En vente 2024')   
+        # if True: # Tests
+        #     years.extend(['En vente 2024'])
+        #     default_year = years.index('En vente 2024')   
             
         self.selected_year = st.selectbox('Année', years, index=default_year).split(' ')[-1]
 
