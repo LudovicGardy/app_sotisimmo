@@ -194,7 +194,7 @@ class PropertyApp(Plotter):
                             st.warning('⚠️ Entrez une clé API **Open AI**.')
                     else:
                         # st.warning('⚠️ Entrez une clé API **Repliacte**.')
-                        st.error('⚠️ Ce modèle n\'est pas encore disponible, veuillez utiliser GPT.')
+                        st.error('⚠️ Ce modèle n\'est pas encore disponible. Veuillez utiliser GPT.')
                     # st.stop()
 
                 # st.markdown('Pour obtenir une clé API, rendez-vous sur le site de [openAI](https://platform.openai.com/api-keys).')
