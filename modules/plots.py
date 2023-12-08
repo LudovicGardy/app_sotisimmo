@@ -55,23 +55,24 @@ class Plotter:
 
         ### Section 1
         if "Carte" in self.selected_plots:
-            # Afficher l'alerte si l'année sélectionnée est 2024
-            if f"{data_gouv_dict.get('data_gouv_years')[-1]+1}" in self.selected_year:
-                st.warning(f"""⚠️ Les tarifs pour {data_gouv_dict.get('data_gouv_years')[-1]+1} sont mis à jour régulièrement par le robot Sotis-IMMO 🤖.
-                              À la différence des données de {data_gouv_dict.get('data_gouv_years')[0]}-{data_gouv_dict.get('data_gouv_years')[-1]}, qui concernent des biens déjà vendus, celles de {data_gouv_dict.get('data_gouv_years')[-1]+1} présentent 
-                              les offres en quasi temps-réel. Toutefois, elles sont moins précises sur le plan géographique, 
-                              étant regroupées par zones approximatives, contrairement aux données des années précédentes, qui sont 
-                              présentées par adresse.""")
-                
-            if 'selected_postcode_title' in st.session_state and st.session_state.selected_postcode_title:
-                map_title = f"Distribution des prix unitaires pour les :blue[{self.selected_local_type.lower()}s] dans le :blue[{st.session_state.selected_postcode_title}] en :blue[{self.selected_year}]"
-            else:
-                map_title = f"Distribution des prix unitaires pour les :blue[{self.selected_local_type.lower()}s] dans le :blue[{self.selected_department}] en :blue[{self.selected_year}]"
-            st.markdown(f"### {map_title}")
+            with st.container(border=True):
+                # Afficher l'alerte si l'année sélectionnée est 2024
+                if f"{data_gouv_dict.get('data_gouv_years')[-1]+1}" in self.selected_year:
+                    st.warning(f"""⚠️ Les tarifs pour {data_gouv_dict.get('data_gouv_years')[-1]+1} sont mis à jour régulièrement par le robot Sotis-IMMO 🤖.
+                                À la différence des données de {data_gouv_dict.get('data_gouv_years')[0]}-{data_gouv_dict.get('data_gouv_years')[-1]}, qui concernent des biens déjà vendus, celles de {data_gouv_dict.get('data_gouv_years')[-1]+1} présentent 
+                                les offres en quasi temps-réel. Toutefois, elles sont moins précises sur le plan géographique, 
+                                étant regroupées par zones approximatives, contrairement aux données des années précédentes, qui sont 
+                                présentées par adresse.""")
+                    
+                if 'selected_postcode_title' in st.session_state and st.session_state.selected_postcode_title:
+                    map_title = f"Distribution des prix unitaires pour les :blue[{self.selected_local_type.lower()}s] dans le :blue[{st.session_state.selected_postcode_title}] en :blue[{self.selected_year}]"
+                else:
+                    map_title = f"Distribution des prix unitaires pour les :blue[{self.selected_local_type.lower()}s] dans le :blue[{self.selected_department}] en :blue[{self.selected_year}]"
+                st.markdown(f"### {map_title}")
 
-            self.plot_map_widgets()
-            self.plot_map()
-            st.divider()
+                self.plot_map_widgets()
+                self.plot_map()
+            # st.divider()
 
         ### Section 2
         if "Fig. 1" in self.selected_plots:
@@ -115,62 +116,62 @@ class Plotter:
             st.markdown("### Votre assistant virtuel")
             if self.selected_model == "GPT 4":
                 self.chat_bot_GPT()
-            elif self.selected_model == "Llama2-7B":
-                self.chat_bot_Llama2_7B()
+            # elif self.selected_model == "Llama2-7B":
+            #     self.chat_bot_Llama2_7B()
 
-    def chat_bot_Llama2_7B(self):
+    # def chat_bot_Llama2_7B(self):
 
-        # Filtring the dataframe by property type
-        filtered_df = self.df_pandas[self.df_pandas['type_local'] == self.selected_local_type]
+    #     # Filtring the dataframe by property type
+    #     filtered_df = self.df_pandas[self.df_pandas['type_local'] == self.selected_local_type]
         
-        # .streamlit/secrets.toml
-        client = OpenAI(api_key=self.model_api_key)
+    #     # .streamlit/secrets.toml
+    #     client = OpenAI(api_key=self.model_api_key)
 
-        if "openai_model" not in st.session_state:
-            st.session_state["openai_model"] = "gpt-4"
+    #     if "openai_model" not in st.session_state:
+    #         st.session_state["openai_model"] = "gpt-4"
 
-        if "messages" not in st.session_state:
-            first_message = {"role": "assistant", "content": f"Bonjour ! Je suis votre agent immobilier virtuel. \n\nVoulez-vous que nous étudions ensemble les :blue[{self.selected_local_type.lower()}s] dans le département :blue[{self.selected_department}] ?"}
-            st.session_state.messages = [first_message]
+    #     if "messages" not in st.session_state:
+    #         first_message = {"role": "assistant", "content": f"Bonjour ! Je suis votre agent immobilier virtuel. \n\nVoulez-vous que nous étudions ensemble les :blue[{self.selected_local_type.lower()}s] dans le département :blue[{self.selected_department}] ?"}
+    #         st.session_state.messages = [first_message]
 
-        for message in st.session_state.messages:
-            with st.chat_message(message["role"]):
-                st.markdown(message["content"])
+    #     for message in st.session_state.messages:
+    #         with st.chat_message(message["role"]):
+    #             st.markdown(message["content"])
 
-        # Exemples de prompts:
-        # Bonjour, que peux-tu me dire sur les biens présentés ici ? Vois-tu de bonnes opportunités à saisir en ce moment ?
-        # A la vue de mes critères de recherche, dans le département que j'ai sélectionné et le type de bien que je recherche, que me conseillerais-tu ? Disons que j'ai un budget de 500K euros, que je pourrais revoir si les arguments sont convaincants.
+    #     # Exemples de prompts:
+    #     # Bonjour, que peux-tu me dire sur les biens présentés ici ? Vois-tu de bonnes opportunités à saisir en ce moment ?
+    #     # A la vue de mes critères de recherche, dans le département que j'ai sélectionné et le type de bien que je recherche, que me conseillerais-tu ? Disons que j'ai un budget de 500K euros, que je pourrais revoir si les arguments sont convaincants.
 
-        if prompt := st.chat_input("Message à l'assistant virtuel"):
-            st.session_state.messages.append({"role": "user", "content": prompt})
-            with st.chat_message("user"):
-                st.markdown(prompt)
-                # query = f"""Regarde ces données: [[prix: {filtered_df['valeur_fonciere'][0:50]}, surfaces: {filtered_df['surface_reelle_bati'][0:50]}, longitudes: {filtered_df['longitude'][0:50]}, latitudes: {filtered_df['latitude'][0:50]}]].
-                query = f"""
-                Tu dois avoir une conversation naturelle avec ton interlocuteur dont voici la demande... \n\n{prompt}"""
+    #     if prompt := st.chat_input("Message à l'assistant virtuel"):
+    #         st.session_state.messages.append({"role": "user", "content": prompt})
+    #         with st.chat_message("user"):
+    #             st.markdown(prompt)
+    #             # query = f"""Regarde ces données: [[prix: {filtered_df['valeur_fonciere'][0:50]}, surfaces: {filtered_df['surface_reelle_bati'][0:50]}, longitudes: {filtered_df['longitude'][0:50]}, latitudes: {filtered_df['latitude'][0:50]}]].
+    #             query = f"""
+    #             Tu dois avoir une conversation naturelle avec ton interlocuteur dont voici la demande... \n\n{prompt}"""
 
-            if not self.model_api_key:
-                st.warning("Veuillez entrer une clé API pour continuer.")
-                return
-            else:
-                with st.chat_message("assistant"):
-                    message_placeholder = st.empty()
-                    full_response = ""
-                    for response in client.chat.completions.create(
-                        model=st.session_state["openai_model"],
-                        messages=[
-                            {"role": m["role"], "content": query}#m["content"]}
-                            for m in st.session_state.messages
-                        ],
-                        stream=True,
-                    ):
-                        full_response += (response.choices[0].delta.content or "")
-                        message_placeholder.markdown(full_response + "▌")
-                    message_placeholder.markdown(full_response)
-                st.session_state.messages.append({"role": "assistant", "content": full_response})
+    #         if not self.model_api_key:
+    #             st.warning("Veuillez entrer une clé API pour continuer.")
+    #             return
+    #         else:
+    #             with st.chat_message("assistant"):
+    #                 message_placeholder = st.empty()
+    #                 full_response = ""
+    #                 for response in client.chat.completions.create(
+    #                     model=st.session_state["openai_model"],
+    #                     messages=[
+    #                         {"role": m["role"], "content": query}#m["content"]}
+    #                         for m in st.session_state.messages
+    #                     ],
+    #                     stream=True,
+    #                 ):
+    #                     full_response += (response.choices[0].delta.content or "")
+    #                     message_placeholder.markdown(full_response + "▌")
+    #                 message_placeholder.markdown(full_response)
+    #             st.session_state.messages.append({"role": "assistant", "content": full_response})
 
-        # if st.button("Clear chat"):
-        #     st.session_state.messages = []
+    #     # if st.button("Clear chat"):
+    #     #     st.session_state.messages = []
         
     def chat_bot_GPT(self):
 
@@ -222,7 +223,7 @@ class Plotter:
 
         if prompt := st.chat_input("Message à l'assistant virtuel"):
             st.session_state.messages.append({"role": "user", "content": prompt})
-            with st.chat_message("user"):
+            with st.chat_message("user"): 
                 st.markdown(prompt)
 
                 # print(num_tokens_from_string(preprompt+prompt, "cl100k_base"))
