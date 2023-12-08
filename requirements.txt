@@ -11,4 +11,4 @@ pymssql
 openai
 tiktoken
 google-cloud-bigquery
-db-types 
+# db-types 
