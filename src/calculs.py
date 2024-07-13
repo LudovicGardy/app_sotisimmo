@@ -1,14 +1,14 @@
-def calculate_median_difference(summarized_df_pandas, selected_department, normalize_by_area, local_type, to_year):
+def calculate_median_difference(properties_summarized, selected_department, normalize_by_area, local_type, to_year):
 
     to_year = int(to_year)
     from_year = to_year - 1
 
     # Filter the summarized data for the given department
-    summarized_df_pandas = summarized_df_pandas[summarized_df_pandas['code_departement'] == selected_department]
-    summarized_df_pandas = summarized_df_pandas[summarized_df_pandas['Year'] <= to_year]
+    properties_summarized = properties_summarized[properties_summarized['code_departement'] == selected_department]
+    properties_summarized = properties_summarized[properties_summarized['Year'] <= to_year]
     column_to_use = 'Median Value SQM' if normalize_by_area else 'Median Value'
     
-    type_data = summarized_df_pandas[summarized_df_pandas['type_local'] == local_type]
+    type_data = properties_summarized[properties_summarized['type_local'] == local_type]
     type_data = type_data.sort_values(by="Year")
 
     # Calculate the annual differences
