@@ -7,7 +7,7 @@ from io import BytesIO
 from google.cloud import bigquery
 from google.oauth2 import service_account
 
-from .config import data_URL, load_configurations
+from .utils.config import data_URL, load_configurations
 
 @st.cache_data
 def fetch_summarized_data():
@@ -21,10 +21,10 @@ def fetch_summarized_data():
     buffer = BytesIO(response.content)
 
     ### Load data into a Pandas dataframe
-    summarized_df_pandas = pd.read_csv(buffer, compression='gzip', header=0, sep=',', quotechar='"', low_memory=False, 
+    properties_summarized = pd.read_csv(buffer, compression='gzip', header=0, sep=',', quotechar='"', low_memory=False, 
                             dtype={'code_postal': str})
     
-    return summarized_df_pandas
+    return properties_summarized
 
 @st.cache_data
 def fetch_data_BigQuery(_cred_dict, selected_dept):
@@ -101,7 +101,7 @@ def fetch_data_gouv(selected_dept, selected_year):
     '''
 
     print("Fetching data from the French open data portal... Year: {}, Department: {}".format(selected_year, selected_dept))
-    df_pandas = None  # Initialisez df_pandas à None ou pd.DataFrame()
+    properties_input = None  # Initialisez properties_input à None ou pd.DataFrame()
 
     # Data from government are available only for the years 2018-2022
     try:
@@ -113,28 +113,28 @@ def fetch_data_gouv(selected_dept, selected_year):
         buffer = BytesIO(response.content)
 
         ### Load data into a Pandas dataframe
-        df_pandas = pd.read_csv(buffer, compression='gzip', header=0, sep=',', quotechar='"', low_memory=False, 
+        properties_input = pd.read_csv(buffer, compression='gzip', header=0, sep=',', quotechar='"', low_memory=False, 
                                 usecols=['type_local', 'valeur_fonciere', 'code_postal', 'surface_reelle_bati', 'longitude', 'latitude'],
                                 dtype={'code_postal': str})
 
         ### Remove rows with missing values
-        df_pandas.dropna(inplace=True)
+        properties_input.dropna(inplace=True)
 
         ### Remove duplicates based on the columns 'valeur_fonciere', 'longitude', and 'latitude'
-        df_pandas.drop_duplicates(subset=['valeur_fonciere', 'longitude', 'latitude'], inplace=True, keep='last')
+        properties_input.drop_duplicates(subset=['valeur_fonciere', 'longitude', 'latitude'], inplace=True, keep='last')
 
         ### Sort by postal code
-        df_pandas = df_pandas.sort_values('code_postal')
+        properties_input = properties_input.sort_values('code_postal')
 
         ### Add leading zeros to postal code
-        df_pandas['code_postal'] = df_pandas['code_postal'].astype(float).astype(int).astype(str).str.zfill(5)
+        properties_input['code_postal'] = properties_input['code_postal'].astype(float).astype(int).astype(str).str.zfill(5)
 
     except Exception as e:
-        if df_pandas is None:
+        if properties_input is None:
             st.sidebar.error("Pas d'information disponible pour le département {} en {}. Sélectionnez une autre configuration.".format(selected_dept, selected_year))
             st.session_state.data_load_error = True
         # st.warning(e)
         st.warning("Les données n'ont pas pu être chargées.")
         print(e)
 
-    return df_pandas
+    return properties_input
