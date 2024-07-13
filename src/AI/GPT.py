@@ -1,7 +1,7 @@
 from openai import OpenAI
 from src.utils.utils import num_tokens_from_string
 
-def chat_bot_GPT(self, st):
+def chatbot_GPT(self, st):
 
     # Filtring the dataframe by property type
     filtered_df = self.properties_input[self.properties_input['type_local'] == self.selected_local_type]

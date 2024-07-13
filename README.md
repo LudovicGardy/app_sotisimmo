@@ -76,7 +76,7 @@ Here's a little app that lets you dive into real estate transactions in France f
 
     - The application will be accessible at `localhost:8501`.
 
-    - Note: If you encounter issues with `pymssql`, adjust its version in `requirements.txt` or remove it before building the Docker image.
+    - ⚠️ If you encounter issues with `pymssql`, adjust its version in `requirements.txt` or remove it before building the Docker image.
 
 ## 👤 Author
 - LinkedIn: [Ludovic Gardy](https://www.linkedin.com/in/ludovic-gardy/)

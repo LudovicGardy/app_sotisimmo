@@ -30,7 +30,9 @@ def page_config():
     page_dict = {
         'page_title': 'Sotis Immobilier',
         'subtitle': 'Prédictions de prix immobiliers',
-        'description': 'Sotis Immobilier est une application web qui permet de prédire les prix immobiliers en France.',
+        'page_description': '''Ce prototype propose de répondre à un besoin de lecture plus claire du marché immobilier. 
+                   \nRendez-vous sur https://www.sotisanalytics.com pour en savoir plus, signaler un problème, une idée ou pour me contacter. Bonne visite ! 
+                   \nSotis A.I.© 2023''',
         'author': 'Sotis AI',
         'base': 'dark',
         'page_icon': f'{env_variables["AWS_S3_URL"]}/Sotis_AI_pure_darkbg_240px.ico',
@@ -57,9 +59,9 @@ def data_URL():
 
     data_dict = {
         'summarized_data_url': f'{env_variables["AWS_S3_URL"]}/geo_dvf_summarized_full.csv.gz',
-        'data_gouv': env_variables["DATA_GOUV_URL"],
-        'data_gouv_years': list(np.arange(2018,2023+1)),
-        '2024_merged': f'{env_variables["AWS_S3_URL"]}/2024_merged/departements',
+        'datagouv_source_URL': env_variables["DATA_GOUV_URL"],
+        'available_years_datagouv': list(np.arange(2018,2023+1)),
+        'scrapped_year_current': f'{env_variables["AWS_S3_URL"]}/2024_merged/departements',
     }
 
     return data_dict

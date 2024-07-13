@@ -20,7 +20,7 @@ from src.display.plotter import Plotter
 firebase_cred = firebase_credentials()
 azure_cred = azure_credentials()
 bigquery_cred = bigquery_credentials()
-data_gouv_dict = data_URL()
+data_sources_origin = data_URL()
 
 if firebase_cred:
     ### Secure way to store the firestore keys and provide them to start_tracking
@@ -85,9 +85,7 @@ class PropertyApp(Plotter):
         with col2:
             st.write('# Sotis A.I.')
 
-        st.caption('''Ce prototype propose de répondre à un besoin de lecture plus claire du marché immobilier. 
-                   \nRendez-vous sur https://www.sotisanalytics.com pour en savoir plus, signaler un problème, une idée ou pour me contacter. Bonne visite ! 
-                   \nSotis A.I.© 2023''')
+        st.caption(page_config().get('page_description'))
 
         st.divider()
 
@@ -133,7 +131,7 @@ class PropertyApp(Plotter):
         st.session_state.previous_selected_department = self.selected_department
 
         ### Set up the year selectbox
-        years_range = data_gouv_dict.get('data_gouv_years')
+        years_range = data_sources_origin.get('available_years_datagouv')
         years = [f'Vendus en {year}' for year in years_range]
         default_year = years.index('Vendus en 2023')      
 

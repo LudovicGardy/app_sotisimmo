@@ -106,7 +106,7 @@ def fetch_data_gouv(selected_dept, selected_year):
     # Data from government are available only for the years 2018-2022
     try:
         ### Download data from the French open data portal
-        url = f'{data_URL().get("data_gouv")}/{selected_year}/departements/{selected_dept}.csv.gz'
+        url = f'{data_URL().get("datagouv_source_URL")}/{selected_year}/departements/{selected_dept}.csv.gz'
         response = requests.get(url)
 
         ### Store data in a buffer

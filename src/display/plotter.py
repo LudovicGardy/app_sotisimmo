@@ -5,9 +5,9 @@ import seaborn as sns
 import numpy as np
 
 from src.calculs import calculate_median_difference
-from src.AI.GPT import chat_bot_GPT
+from src.AI.GPT import chatbot_GPT
 from ..utils.config import data_URL
-data_gouv_dict = data_URL()
+data_sources_origin = data_URL()
 
 class Plotter:
 
@@ -40,16 +40,16 @@ class Plotter:
                     en France, réparties par type de bien : maisons, appartements et locaux commerciaux. Grâce à la barre d'options 
                     latérale, personnalisez votre expérience en sélectionnant le département, l'année et la catégorie de bien qui vous 
                     intéressent. Vous aurez ainsi accès à un riche ensemble de données portant sur plusieurs millions de transactions 
-                    immobilières effectuées entre {data_gouv_dict.get('data_gouv_years')[0]} et {data_gouv_dict.get('data_gouv_years')[-1]}.
+                    immobilières effectuées entre {data_sources_origin.get('available_years_datagouv')[0]} et {data_sources_origin.get('available_years_datagouv')[-1]}.
         """)
 
         ### Section 1
         if "Carte" in self.selected_plots:
             with st.container(border=True):
                 # Afficher l'alerte si l'année sélectionnée est 2024
-                if f"{data_gouv_dict.get('data_gouv_years')[-1]+1}" in self.selected_year:
-                    st.warning(f"""⚠️ Les tarifs pour {data_gouv_dict.get('data_gouv_years')[-1]+1} sont mis à jour régulièrement par le robot Sotis-IMMO 🤖.
-                                À la différence des données de {data_gouv_dict.get('data_gouv_years')[0]}-{data_gouv_dict.get('data_gouv_years')[-1]}, qui concernent des biens déjà vendus, celles de {data_gouv_dict.get('data_gouv_years')[-1]+1} présentent 
+                if f"{data_sources_origin.get('available_years_datagouv')[-1]+1}" in self.selected_year:
+                    st.warning(f"""⚠️ Les tarifs pour {data_sources_origin.get('available_years_datagouv')[-1]+1} sont mis à jour régulièrement par le robot Sotis-IMMO 🤖.
+                                À la différence des données de {data_sources_origin.get('available_years_datagouv')[0]}-{data_sources_origin.get('available_years_datagouv')[-1]}, qui concernent des biens déjà vendus, celles de {data_sources_origin.get('available_years_datagouv')[-1]+1} présentent 
                                 les offres en quasi temps-réel. Toutefois, elles sont moins précises sur le plan géographique, 
                                 étant regroupées par zones approximatives, contrairement aux données des années précédentes, qui sont 
                                 présentées par adresse.""")
@@ -80,15 +80,15 @@ class Plotter:
             st.divider()
 
         ### Section 4
-        if "Fig. 3" in self.selected_plots and int(self.selected_year) != int(data_gouv_dict.get('data_gouv_years')[0]) and int(self.selected_year) != int(data_gouv_dict.get('data_gouv_years')[-1])+1:
+        if "Fig. 3" in self.selected_plots and int(self.selected_year) != int(data_sources_origin.get('available_years_datagouv')[0]) and int(self.selected_year) != int(data_sources_origin.get('available_years_datagouv')[-1])+1:
             st.markdown(f"""### Fig 3. Evolution des prix médians des :blue[{self.selected_local_type.lower()}s] dans le :blue[{self.selected_department}] entre :blue[{int(self.selected_year)-1}] et :blue[{self.selected_year}]""")
             self.plot_3_widgets()
             self.plot_3()
-        elif int(self.selected_year) == int(data_gouv_dict.get('data_gouv_years')[0]):
+        elif int(self.selected_year) == int(data_sources_origin.get('available_years_datagouv')[0]):
             if "Fig. 3" in self.selected_plots:
                 st.warning("Fig 3. ne peut pas être calculée car l'année sélectionnée est 2018. Or, les données de 2017 ne sont pas connues pas ce programme.")
                 st.divider()
-        elif int(self.selected_year) == int(data_gouv_dict.get('data_gouv_years')[-1]+1):
+        elif int(self.selected_year) == int(data_sources_origin.get('available_years_datagouv')[-1]+1):
             if "Fig. 3" in self.selected_plots:
                 st.warning("Fig 3. ne peut pas être calculée pour l'année 2024.")
                 st.divider()
@@ -105,9 +105,9 @@ class Plotter:
         if self.chatbot_checkbox:
             st.markdown("### Votre assistant virtuel")
             if self.selected_model == "GPT 4":
-                chat_bot_GPT(self, st)
+                chatbot_GPT(self, st)
             # elif self.selected_model == "Llama2-7B":
-            #     self.chat_bot_Llama2_7B()
+            #     self.chatbot_Llama2_7B()
         
 
     def plot_map_widgets(self):
@@ -132,8 +132,8 @@ class Plotter:
             st.caption("""Retirer les valeurs extrêmes (>1.5*IQR) permet d'améliorer la lisibilité de la carte.
                        Ces valeurs sont éliminées uniquement sur cette représentation, pas les prochaine.""")
 
-        if self.selected_year == data_gouv_dict.get('data_gouv_years')[-1]+1 and not self.use_jitter:
-            st.success(f"""💡 Pour une meilleure visibilité des données géographiques de {data_gouv_dict.get('data_gouv_years')[-1]+1}, il est conseillé de cocher la case
+        if self.selected_year == data_sources_origin.get('available_years_datagouv')[-1]+1 and not self.use_jitter:
+            st.success(f"""💡 Pour une meilleure visibilité des données géographiques de {data_sources_origin.get('available_years_datagouv')[-1]+1}, il est conseillé de cocher la case
                         'Eviter la superposition des points' ci-dessus.""")
 
     # @st.cache_data
@@ -343,9 +343,9 @@ class Plotter:
 
                 with cols[idx]:
                     if annual_average_diff > 0:
-                        st.metric(label=local_type, value=f"+{annual_average_diff:.2f} €", delta=f"{percentage_diff:.2f} % depuis {data_gouv_dict.get('data_gouv_years')[0]}")
+                        st.metric(label=local_type, value=f"+{annual_average_diff:.2f} €", delta=f"{percentage_diff:.2f} % depuis {data_sources_origin.get('available_years_datagouv')[0]}")
                     else:
-                        st.metric(label=local_type, value=f"{annual_average_diff:.2f} €", delta=f"{percentage_diff:.2f} % depuis {data_gouv_dict.get('data_gouv_years')[0]}")
+                        st.metric(label=local_type, value=f"{annual_average_diff:.2f} €", delta=f"{percentage_diff:.2f} % depuis {data_sources_origin.get('available_years_datagouv')[0]}")
 
             fig = px.line(dept_data, 
                           x='Year', 
