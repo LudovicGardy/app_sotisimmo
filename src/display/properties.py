@@ -14,7 +14,7 @@ import json
 import sys
 
 ### Relative imports
-from ..utils.config import firebase_credentials, page_config, data_URL, azure_credentials, bigquery_credentials
+from ..config import firebase_credentials, page_config, data_URL, azure_credentials, bigquery_credentials
 from src.data_loader import fetch_summarized_data, fetch_data_gouv, fetch_data_BigQuery
 from src.display.plotter import Plotter
 firebase_cred = firebase_credentials()
@@ -41,14 +41,6 @@ st.set_page_config(page_title=page_config().get('page_title'),
 class PropertyApp(Plotter):
     '''
     This class creates a Streamlit app that displays the average price of real estate properties in France, by department.
-
-    Parameters
-    ----------
-    None
-
-    Returns
-    -------
-    A Streamlit app
     '''
     
     def __init__(self):        

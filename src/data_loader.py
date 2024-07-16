@@ -7,7 +7,7 @@ from io import BytesIO
 from google.cloud import bigquery
 from google.oauth2 import service_account
 
-from .utils.config import data_URL, load_configurations
+from .config import data_URL, load_configurations
 
 @st.cache_data
 def fetch_summarized_data():
