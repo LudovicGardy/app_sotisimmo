@@ -10,7 +10,7 @@ Here's a little app that lets you dive into real estate transactions in France f
 
 👉 Access the app and start your exploration now at [https://immo.sotisanalytics.com](https://immo.sotisanalytics.com).
 
-| ![Image1](images/image1.jpeg) | ![Image2](images/image2.jpg) |
+| ![Image1](images/image1.jpeg) | ![Image2](images/image2.png) |
 |:---------------------:|:---------------------:|
 |Pipeline|Application|
 
