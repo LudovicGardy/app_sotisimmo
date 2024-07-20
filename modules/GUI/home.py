@@ -31,12 +31,6 @@ if firebase_cred:
 else:
     print("No credentials were found. Analytics will not be tracked.")
 
-### Set page config
-st.set_page_config(page_title=page_config().get('page_title'), 
-                    page_icon = page_config().get('page_icon'),  
-                    layout = page_config().get('layout'),
-                    initial_sidebar_state = page_config().get('initial_sidebar_state'))
-
 ### App
 class App(Plotter):
     '''
@@ -46,13 +40,13 @@ class App(Plotter):
     def __init__(self):        
         print("Init the app...")
 
+        self.init_page_config()
+        self.init_session_state()
+
         st.markdown(page_config().get('markdown'), unsafe_allow_html=True)
 
         ### Init parameters
         self.data_loaded = True  # Variable to check if the data has been loaded
-
-        if 'selected_postcode_title' not in st.session_state:
-            st.session_state.selected_postcode_title = None
 
         self.properties_summarized = fetch_summarized_data()
 
@@ -80,6 +74,17 @@ class App(Plotter):
         st.caption(page_config().get('page_description'))
 
         st.divider()
+
+    def init_session_state(self):
+        if 'selected_postcode_title' not in st.session_state:
+            st.session_state.selected_postcode_title = None
+
+    def init_page_config(self): ### Must be called before any other st. function
+        st.set_page_config(page_title=page_config().get('page_title'), 
+                    page_icon = page_config().get('page_icon'),  
+                    layout = page_config().get('layout'),
+                    initial_sidebar_state = page_config().get('initial_sidebar_state'))
+
 
     def initial_request(self):
         '''
