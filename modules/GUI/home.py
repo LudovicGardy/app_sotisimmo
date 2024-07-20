@@ -15,8 +15,8 @@ import sys
 
 ### Relative imports
 from ..config import firebase_credentials, page_config, data_URL, azure_credentials, bigquery_credentials
-from src.data_loader import fetch_summarized_data, fetch_data_gouv, fetch_data_BigQuery
-from src.display.plotter import Plotter
+from modules.data_loader import fetch_summarized_data, fetch_data_gouv, fetch_data_BigQuery
+from modules.GUI.plotter import Plotter
 firebase_cred = firebase_credentials()
 azure_cred = azure_credentials()
 bigquery_cred = bigquery_credentials()
@@ -38,7 +38,7 @@ st.set_page_config(page_title=page_config().get('page_title'),
                     initial_sidebar_state = page_config().get('initial_sidebar_state'))
 
 ### App
-class PropertyApp(Plotter):
+class App(Plotter):
     '''
     This class creates a Streamlit app that displays the average price of real estate properties in France, by department.
     '''
@@ -184,4 +184,4 @@ if firebase_cred:
     streamlit_analytics.stop_tracking(firestore_key_file=tfile.name, firestore_collection_name='sotisimmo_analytics')
 
 if __name__ == '__main__':
-    PropertyApp()
+    App()
