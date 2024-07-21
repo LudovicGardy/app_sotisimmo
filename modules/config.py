@@ -1,5 +1,6 @@
 import numpy as np
 import os
+import toml
 from dotenv import load_dotenv, find_dotenv
 from google.oauth2 import service_account
 
@@ -19,26 +20,32 @@ def load_configurations():
         # Le fichier .env n'existe pas, retourne toutes les variables d'environnement du système
         return dict(os.environ)
 
-### CONFIGURATION ###
-def page_config():
-    '''
-    Set the page configuration (title, favicon, layout, etc.)
-    '''
+def load_toml_config(file_path):
+    """
+    Charge les configurations à partir d'un fichier .toml
+    """
+    try:
+        with open(file_path, 'r') as file:
+            return toml.load(file).get('theme', {})
+    except FileNotFoundError:
+        return {}
 
+def page_config():
+    """
+    Set the page configuration (title, favicon, layout, etc.)
+    """
     env_variables = load_configurations()
+    toml_config = load_toml_config('.streamlit/config.toml')
 
     page_dict = {
-        'page_title': 'Sotis Immobilier',
-        'subtitle': 'Prédictions de prix immobiliers',
-        'page_description': '''Ce prototype propose de répondre à un besoin de lecture plus claire du marché immobilier. 
-                   \nRendez-vous sur https://www.sotisanalytics.com pour en savoir plus, signaler un problème, une idée ou pour me contacter. Bonne visite ! 
-                   \nSotis A.I.© 2023''',
-        'author': 'Sotis AI',
-        'base': 'dark',
+        'page_title': toml_config.get('page_title', 'Sotis Immobilier'),
+        'sidebar_title': f"# {toml_config.get('sidebar_title', 'Sotis A.I.')}",
+        'base': toml_config.get('base', 'dark'),
         'page_icon': f'{env_variables["AWS_S3_URL"]}/Sotis_AI_pure_darkbg_240px.ico',
         'page_logo': f'{env_variables["AWS_S3_URL"]}/Sotis_AI_pure_darkbg_240px.png',
-        'layout': 'wide',
-        'initial_sidebar_state': 'auto',
+        'layout': toml_config.get('layout', 'wide'),
+        'initial_sidebar_state': toml_config.get('initial_sidebar_state', 'auto'),
+        'author': 'Sotis AI',
         'markdown': '''
                     <style>
                         .css-10pw50 {
@@ -46,6 +53,9 @@ def page_config():
                         }
                     </style>
                     ''',
+        'page_description': '''Ce prototype propose de répondre à un besoin de lecture plus claire du marché immobilier. 
+                   \nRendez-vous sur https://www.sotisanalytics.com pour en savoir plus, signaler un problème, une idée ou pour me contacter. Bonne visite ! 
+                   \nSotis A.I.© 2023''',
     }
 
     return page_dict

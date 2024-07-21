@@ -16,6 +16,7 @@ import sys
 ### Relative imports
 from ..config import firebase_credentials, page_config, data_URL, azure_credentials, bigquery_credentials
 from modules.data_loader import fetch_summarized_data, fetch_data_gouv, fetch_data_BigQuery
+from .ui_components import init_page_config, display_sidebar, init_session_state
 from modules.GUI.plotter import Plotter
 firebase_cred = firebase_credentials()
 azure_cred = azure_credentials()
@@ -40,18 +41,16 @@ class App(Plotter):
     def __init__(self):        
         print("Init the app...")
 
-        self.init_page_config()
-        self.init_session_state()
+        init_page_config(page_config)
+        init_session_state()
 
         st.markdown(page_config().get('markdown'), unsafe_allow_html=True)
 
-        ### Init parameters
         self.data_loaded = True  # Variable to check if the data has been loaded
-
         self.properties_summarized = fetch_summarized_data()
 
         with st.sidebar:
-            self.steup_sidebar()
+            display_sidebar(page_config)
             self.initial_request()
 
         if isinstance(self.properties_input, pd.DataFrame):
@@ -60,30 +59,7 @@ class App(Plotter):
             else:
                 st.sidebar.error("Pas d'information disponible pour le département {} en {}. Sélectionnez une autre configuration.".format(self.selected_department, self.selected_year))
 
-    def steup_sidebar(self):
-        logo_path = page_config().get('page_logo')
-        desired_width = 60
 
-        col1, col2 = st.columns([1, 3])
-        
-        with col1:
-            st.image(logo_path, width=desired_width)
-        with col2:
-            st.write('# Sotis A.I.')
-
-        st.caption(page_config().get('page_description'))
-
-        st.divider()
-
-    def init_session_state(self):
-        if 'selected_postcode_title' not in st.session_state:
-            st.session_state.selected_postcode_title = None
-
-    def init_page_config(self): ### Must be called before any other st. function
-        st.set_page_config(page_title=page_config().get('page_title'), 
-                    page_icon = page_config().get('page_icon'),  
-                    layout = page_config().get('layout'),
-                    initial_sidebar_state = page_config().get('initial_sidebar_state'))
 
 
     def initial_request(self):
