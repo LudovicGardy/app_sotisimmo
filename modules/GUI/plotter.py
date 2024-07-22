@@ -1,21 +1,23 @@
-import streamlit as st
+import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 import seaborn as sns
-import numpy as np
+import streamlit as st
 
-from modules.calculs import calculate_median_difference
 from modules.AI.GPT import chatbot_GPT
+from modules.calculs import calculate_median_difference
+
 from ..config import data_URL
+
 data_sources_origin = data_URL()
 
-class Plotter:
 
+class Plotter:
     def __init__(self):
-        print('Initializing Plotter...')
+        print("Initializing Plotter...")
 
     def create_plots(self):
-        '''
+        """
         Create the plots.
 
         Parameters
@@ -25,16 +27,20 @@ class Plotter:
         Returns
         -------
         Grphical representation
-        '''
+        """
         print("Creating plots...")
 
         if self.properties_input is None:
-            st.error("Pas d'information disponible pour le département {} en {}. Sélectionnez une autre configuration.".format(self.selected_department, self.selected_year))
+            st.error(
+                "Pas d'information disponible pour le département {} en {}. Sélectionnez une autre configuration.".format(
+                    self.selected_department, self.selected_year
+                )
+            )
             return
 
         # Set the title of the section
         # st.markdown('# Sotis A.I. Immobilier')
-        st.markdown('## Visualisez les prix de l\'immobilier en France')
+        st.markdown("## Visualisez les prix de l'immobilier en France")
         st.markdown(f"""
         🏠 Les graphiques interactifs que vous découvrirez ci-dessous offrent une vue d'ensemble détaillée des valeurs immobilières 
                     en France, réparties par type de bien : maisons, appartements et locaux commerciaux. Grâce à la barre d'options 
@@ -47,14 +53,20 @@ class Plotter:
         if "Carte" in self.selected_plots:
             with st.container(border=True):
                 # Afficher l'alerte si l'année sélectionnée est 2024
-                if f"{data_sources_origin.get('available_years_datagouv')[-1]+1}" in self.selected_year:
+                if (
+                    f"{data_sources_origin.get('available_years_datagouv')[-1]+1}"
+                    in self.selected_year
+                ):
                     st.warning(f"""⚠️ Les tarifs pour {data_sources_origin.get('available_years_datagouv')[-1]+1} sont mis à jour régulièrement par le robot Sotis-IMMO 🤖.
                                 À la différence des données de {data_sources_origin.get('available_years_datagouv')[0]}-{data_sources_origin.get('available_years_datagouv')[-1]}, qui concernent des biens déjà vendus, celles de {data_sources_origin.get('available_years_datagouv')[-1]+1} présentent 
                                 les offres en quasi temps-réel. Toutefois, elles sont moins précises sur le plan géographique, 
                                 étant regroupées par zones approximatives, contrairement aux données des années précédentes, qui sont 
                                 présentées par adresse.""")
-                    
-                if 'selected_postcode_title' in st.session_state and st.session_state.selected_postcode_title:
+
+                if (
+                    "selected_postcode_title" in st.session_state
+                    and st.session_state.selected_postcode_title
+                ):
                     map_title = f"Distribution des prix unitaires pour les :blue[{self.selected_local_type.lower()}s] dans le :blue[{st.session_state.selected_postcode_title}] en :blue[{self.selected_year}]"
                 else:
                     map_title = f"Distribution des prix unitaires pour les :blue[{self.selected_local_type.lower()}s] dans le :blue[{self.selected_department}] en :blue[{self.selected_year}]"
@@ -66,13 +78,17 @@ class Plotter:
 
         ### Section 2
         if "Fig. 1" in self.selected_plots:
-            st.markdown(f"### Fig 1. Distribution des prix médians pour tous les types de biens dans le :blue[{self.selected_department}] en :blue[{self.selected_year}]")
+            st.markdown(
+                f"### Fig 1. Distribution des prix médians pour tous les types de biens dans le :blue[{self.selected_department}] en :blue[{self.selected_year}]"
+            )
             self.plot_1()
             st.divider()
 
         ### Section 3
         if "Fig. 2" in self.selected_plots:
-            st.markdown(f"### Fig 2. Distribution des prix médians pour les :blue[{self.selected_local_type.lower()}s] dans le :blue[{self.selected_department}] en :blue[{self.selected_year}]")
+            st.markdown(
+                f"### Fig 2. Distribution des prix médians pour les :blue[{self.selected_local_type.lower()}s] dans le :blue[{self.selected_department}] en :blue[{self.selected_year}]"
+            )
             st.markdown("""Les nombres au-dessus des barres représentent le nombre de biens par code postal. 
                         Ils fournissent un contexte sur le volume des ventes pour chaque zone.""")
             self.plot_2_widgets()
@@ -80,15 +96,29 @@ class Plotter:
             st.divider()
 
         ### Section 4
-        if "Fig. 3" in self.selected_plots and int(self.selected_year) != int(data_sources_origin.get('available_years_datagouv')[0]) and int(self.selected_year) != int(data_sources_origin.get('available_years_datagouv')[-1])+1:
-            st.markdown(f"""### Fig 3. Evolution des prix médians des :blue[{self.selected_local_type.lower()}s] dans le :blue[{self.selected_department}] entre :blue[{int(self.selected_year)-1}] et :blue[{self.selected_year}]""")
+        if (
+            "Fig. 3" in self.selected_plots
+            and int(self.selected_year)
+            != int(data_sources_origin.get("available_years_datagouv")[0])
+            and int(self.selected_year)
+            != int(data_sources_origin.get("available_years_datagouv")[-1]) + 1
+        ):
+            st.markdown(
+                f"""### Fig 3. Evolution des prix médians des :blue[{self.selected_local_type.lower()}s] dans le :blue[{self.selected_department}] entre :blue[{int(self.selected_year)-1}] et :blue[{self.selected_year}]"""
+            )
             self.plot_3_widgets()
             self.plot_3()
-        elif int(self.selected_year) == int(data_sources_origin.get('available_years_datagouv')[0]):
+        elif int(self.selected_year) == int(
+            data_sources_origin.get("available_years_datagouv")[0]
+        ):
             if "Fig. 3" in self.selected_plots:
-                st.warning("Fig 3. ne peut pas être calculée car l'année sélectionnée est 2018. Or, les données de 2017 ne sont pas connues pas ce programme.")
+                st.warning(
+                    "Fig 3. ne peut pas être calculée car l'année sélectionnée est 2018. Or, les données de 2017 ne sont pas connues pas ce programme."
+                )
                 st.divider()
-        elif int(self.selected_year) == int(data_sources_origin.get('available_years_datagouv')[-1]+1):
+        elif int(self.selected_year) == int(
+            data_sources_origin.get("available_years_datagouv")[-1] + 1
+        ):
             if "Fig. 3" in self.selected_plots:
                 st.warning("Fig 3. ne peut pas être calculée pour l'année 2024.")
                 st.divider()
@@ -97,7 +127,9 @@ class Plotter:
         ##- Defining a modifiable title using a placeholder (empty string)
         if "Fig. 4" in self.selected_plots:
             self.fig4_title = st.empty()
-            self.fig4_title.markdown(f"### Fig 4. Distribution des prix unitaires pour tous les types de biens dans le :blue[votre quartier] en :blue[{self.selected_year}]")
+            self.fig4_title.markdown(
+                f"### Fig 4. Distribution des prix unitaires pour tous les types de biens dans le :blue[votre quartier] en :blue[{self.selected_year}]"
+            )
             self.plot_4_widgets()
             self.plot_4()
 
@@ -108,23 +140,43 @@ class Plotter:
                 chatbot_GPT(self, st)
             # elif self.selected_model == "Llama2-7B":
             #     self.chatbot_Llama2_7B()
-        
 
     def plot_map_widgets(self):
         print("Creating map...")
         col1, col2 = st.columns(2)  # Créer deux colonnes
 
         with col2:
-            mapbox_styles = ["open-street-map", "carto-positron", "carto-darkmatter", "white-bg"]
+            mapbox_styles = [
+                "open-street-map",
+                "carto-positron",
+                "carto-darkmatter",
+                "white-bg",
+            ]
             default_map = mapbox_styles.index("open-street-map")
-            self.selected_mapbox_style = st.selectbox("🌏 Style de carte", mapbox_styles, index=default_map)
+            self.selected_mapbox_style = st.selectbox(
+                "🌏 Style de carte", mapbox_styles, index=default_map
+            )
 
-            colormaps = ["Rainbow", "Portland", "Jet", "Viridis", "Plasma", "Cividis", "Inferno", "Magma", "RdBu"]
+            colormaps = [
+                "Rainbow",
+                "Portland",
+                "Jet",
+                "Viridis",
+                "Plasma",
+                "Cividis",
+                "Inferno",
+                "Magma",
+                "RdBu",
+            ]
             default_cmap = colormaps.index("Rainbow")
-            self.selected_colormap = st.selectbox("🎨 Echelle de couleurs", colormaps, index=default_cmap)
+            self.selected_colormap = st.selectbox(
+                "🎨 Echelle de couleurs", colormaps, index=default_cmap
+            )
 
         with col1:
-            self.use_fixed_marker_size = st.checkbox("Fixer la taille des points", False)
+            self.use_fixed_marker_size = st.checkbox(
+                "Fixer la taille des points", False
+            )
 
             self.use_jitter = st.checkbox("Eviter la superposition des points", True)
 
@@ -132,74 +184,95 @@ class Plotter:
             st.caption("""Retirer les valeurs extrêmes (>1.5*IQR) permet d'améliorer la lisibilité de la carte.
                        Ces valeurs sont éliminées uniquement sur cette représentation, pas les prochaine.""")
 
-        if self.selected_year == data_sources_origin.get('available_years_datagouv')[-1]+1 and not self.use_jitter:
+        if (
+            self.selected_year
+            == data_sources_origin.get("available_years_datagouv")[-1] + 1
+            and not self.use_jitter
+        ):
             st.success(f"""💡 Pour une meilleure visibilité des données géographiques de {data_sources_origin.get('available_years_datagouv')[-1]+1}, il est conseillé de cocher la case
                         'Eviter la superposition des points' ci-dessus.""")
 
     # @st.cache_data
     def plot_map(self):
-
         if not self.use_jitter:
             self.jitter_value = 0
         else:
             self.jitter_value = 0.01
 
         # Filtring the dataframe by property type
-        filtered_df = self.properties_input[self.properties_input['type_local'] == self.selected_local_type]
-        
+        filtered_df = self.properties_input[
+            self.properties_input["type_local"] == self.selected_local_type
+        ]
+
         # Further filtering if a postcode is selected
-        if hasattr(st.session_state, 'selected_postcode'):
-            filtered_df = filtered_df[filtered_df['code_postal'] == st.session_state.selected_postcode]
+        if hasattr(st.session_state, "selected_postcode"):
+            filtered_df = filtered_df[
+                filtered_df["code_postal"] == st.session_state.selected_postcode
+            ]
 
         if self.remove_outliers:
             # Calculate Q1, Q3, and IQR
-            Q1 = filtered_df['valeur_fonciere'].quantile(0.25)
-            Q3 = filtered_df['valeur_fonciere'].quantile(0.75)
+            Q1 = filtered_df["valeur_fonciere"].quantile(0.25)
+            Q3 = filtered_df["valeur_fonciere"].quantile(0.75)
             IQR = Q3 - Q1
             # Calculate the upper fence (using 1.5xIQR)
             upper_fence = Q3 + 1.5 * IQR
             # Filter out outliers based on the upper fence
-            filtered_df = filtered_df[filtered_df['valeur_fonciere'] <= upper_fence]
+            filtered_df = filtered_df[filtered_df["valeur_fonciere"] <= upper_fence]
 
         # self.jitter_value = val if self.use_jitter else 0
-        filtered_df['longitude'] = filtered_df['longitude'].astype(float)
-        filtered_df['latitude'] = filtered_df['latitude'].astype(float)
-        filtered_df.loc[:, 'latitude'] = filtered_df['latitude'] + np.random.uniform(-self.jitter_value, self.jitter_value, size=len(filtered_df))
-        filtered_df.loc[:, 'longitude'] = filtered_df['longitude'] + np.random.uniform(-self.jitter_value, self.jitter_value, size=len(filtered_df))
-        
+        filtered_df["longitude"] = filtered_df["longitude"].astype(float)
+        filtered_df["latitude"] = filtered_df["latitude"].astype(float)
+        filtered_df.loc[:, "latitude"] = filtered_df["latitude"] + np.random.uniform(
+            -self.jitter_value, self.jitter_value, size=len(filtered_df)
+        )
+        filtered_df.loc[:, "longitude"] = filtered_df["longitude"] + np.random.uniform(
+            -self.jitter_value, self.jitter_value, size=len(filtered_df)
+        )
+
         # Add a column with a fixed size for all markers
         filtered_df = filtered_df.assign(marker_size=0.5)
 
         print(filtered_df.head())
 
-        size_column = 'marker_size' if self.use_fixed_marker_size else 'valeur_fonciere'
+        size_column = "marker_size" if self.use_fixed_marker_size else "valeur_fonciere"
 
         # Create the map
-        fig = px.scatter_mapbox(filtered_df, 
-                                lat='latitude', 
-                                lon='longitude', 
-                                color='valeur_fonciere', 
-                                size=size_column, 
-                                color_continuous_scale=self.selected_colormap, 
-                                size_max=15, 
-                                zoom=6, 
-                                opacity=0.8, 
-                                hover_data=['code_postal', 'valeur_fonciere', 'longitude', 'latitude'])
-                        
+        fig = px.scatter_mapbox(
+            filtered_df,
+            lat="latitude",
+            lon="longitude",
+            color="valeur_fonciere",
+            size=size_column,
+            color_continuous_scale=self.selected_colormap,
+            size_max=15,
+            zoom=6,
+            opacity=0.8,
+            hover_data=["code_postal", "valeur_fonciere", "longitude", "latitude"],
+        )
+
         # Update the map style
         fig.update_layout(mapbox_style=self.selected_mapbox_style)
-        fig.update_coloraxes(colorbar_thickness=10, colorbar_title_text="", colorbar_x=1, colorbar_xpad=0, colorbar_len=1.0, colorbar_y=0.5)
+        fig.update_coloraxes(
+            colorbar_thickness=10,
+            colorbar_title_text="",
+            colorbar_x=1,
+            colorbar_xpad=0,
+            colorbar_len=1.0,
+            colorbar_y=0.5,
+        )
         fig.update_layout(height=800)
 
         st.plotly_chart(fig, use_container_width=True)
 
     # @st.cache_data
     def plot_1(self):
-
         print("Creating plot 1...")
-        grouped_data = self.properties_input.groupby(["code_postal", "type_local"]).agg({
-            "valeur_fonciere": "median"
-        }).reset_index()
+        grouped_data = (
+            self.properties_input.groupby(["code_postal", "type_local"])
+            .agg({"valeur_fonciere": "median"})
+            .reset_index()
+        )
 
         # Triez grouped_data par code_postal
         grouped_data = grouped_data.sort_values("code_postal")
@@ -207,208 +280,293 @@ class Plotter:
         # Réinitialisez l'index de grouped_data
         grouped_data = grouped_data.reset_index(drop=True)
 
-        
-        fig = px.line(grouped_data, x=grouped_data.index, y='valeur_fonciere', color='type_local', 
-                    markers=True, labels={'valeur_fonciere': 'Average Price'})
+        fig = px.line(
+            grouped_data,
+            x=grouped_data.index,
+            y="valeur_fonciere",
+            color="type_local",
+            markers=True,
+            labels={"valeur_fonciere": "Average Price"},
+        )
 
         # Utilisez l'index pour tickvals et les codes postaux pour ticktext
-        tickvals = grouped_data.index[::len(grouped_data['type_local'].unique())]
-        ticktext = grouped_data['code_postal'].unique()
-        
+        tickvals = grouped_data.index[:: len(grouped_data["type_local"].unique())]
+        ticktext = grouped_data["code_postal"].unique()
+
         # Utilisez tickvals et ticktext pour mettre à jour l'axe des x
-        fig.update_xaxes(tickvals=tickvals, ticktext=ticktext, range=[tickvals[0], tickvals[-1]], title_text = "Code postal")
-        fig.update_yaxes(title_text='Prix médian en €')
-        fig.update_layout(legend_orientation="h", 
-                        legend=dict(y=1.1, x=0.5, xanchor='center', title_text=''),
-                        height=600)
+        fig.update_xaxes(
+            tickvals=tickvals,
+            ticktext=ticktext,
+            range=[tickvals[0], tickvals[-1]],
+            title_text="Code postal",
+        )
+        fig.update_yaxes(title_text="Prix médian en €")
+        fig.update_layout(
+            legend_orientation="h",
+            legend=dict(y=1.1, x=0.5, xanchor="center", title_text=""),
+            height=600,
+        )
         st.plotly_chart(fig, use_container_width=True)
 
     def plot_2_widgets(self):
         print("Creating plot 2 widgets...")
 
         # Check for orientation preference
-        self.orientation = st.radio("Orientation", ["Barres horizontales (Grand écran)", "Barres verticales (Petit écran)"], label_visibility="hidden")
+        self.orientation = st.radio(
+            "Orientation",
+            ["Barres horizontales (Grand écran)", "Barres verticales (Petit écran)"],
+            label_visibility="hidden",
+        )
 
     # @st.cache_data
     def plot_2(self):
         print("Creating plot 2...")
 
         # Filtring the dataframe by property type
-        filtered_df = self.properties_input[self.properties_input['type_local'] == self.selected_local_type]
+        filtered_df = self.properties_input[
+            self.properties_input["type_local"] == self.selected_local_type
+        ]
 
         # Grouping the dataframe by postal code and calculating the average property price
-        grouped = filtered_df.groupby('code_postal').agg({
-            'valeur_fonciere': 'median',
-            'type_local': 'count'
-        }).reset_index()
+        grouped = (
+            filtered_df.groupby("code_postal")
+            .agg({"valeur_fonciere": "median", "type_local": "count"})
+            .reset_index()
+        )
 
         # Renaming the columns
-        grouped.columns = ['Postal Code', 'Property Value', 'Count']
+        grouped.columns = ["Postal Code", "Property Value", "Count"]
 
         # Creation of the bar chart
         if self.orientation == "Barres horizontales (Grand écran)":
-            fig = px.bar(grouped, x='Postal Code', y='Property Value')
-            fig.update_layout(yaxis_title='Prix médian en €', xaxis_title='Code postal')
-            fig.update_yaxes(type='linear')
-            fig.update_xaxes(type='category')
+            fig = px.bar(grouped, x="Postal Code", y="Property Value")
+            fig.update_layout(yaxis_title="Prix médian en €", xaxis_title="Code postal")
+            fig.update_yaxes(type="linear")
+            fig.update_xaxes(type="category")
             fig.update_layout(height=600)
         else:
-            fig = px.bar(grouped, y='Postal Code', x='Property Value', orientation='h')
-            fig.update_layout(xaxis_title='Prix médian en €', yaxis_title='Code postal')
-            fig.update_yaxes(type='category')
-            fig.update_xaxes(type='linear')
+            fig = px.bar(grouped, y="Postal Code", x="Property Value", orientation="h")
+            fig.update_layout(xaxis_title="Prix médian en €", yaxis_title="Code postal")
+            fig.update_yaxes(type="category")
+            fig.update_xaxes(type="linear")
             fig.update_layout(height=1200)
 
         # Update the bar chart
-        fig.update_traces(text=grouped['Count'], textposition='outside')
+        fig.update_traces(text=grouped["Count"], textposition="outside")
         st.plotly_chart(fig, use_container_width=True)
 
     def plot_3_widgets(self):
         print("Creating plot 3 widgets...")
         # Add a selectbox for choosing between bar and line plot
-        #plot_types = ["Bar", "Line"]
-        #selected_plot_type = st.selectbox("Selectionner une visualisation", plot_types, index=0)
+        # plot_types = ["Bar", "Line"]
+        # selected_plot_type = st.selectbox("Selectionner une visualisation", plot_types, index=0)
 
-        self.selected_plot_type = st.radio("Type", ["Graphique en barres", "Graphique en lignes"], label_visibility="hidden")
+        self.selected_plot_type = st.radio(
+            "Type",
+            ["Graphique en barres", "Graphique en lignes"],
+            label_visibility="hidden",
+        )
 
         # Determine the column to display
-        self.value_column = 'Median Value SQM' if self.normalize_by_area else 'Median Value'
+        self.value_column = (
+            "Median Value SQM" if self.normalize_by_area else "Median Value"
+        )
 
     # @st.cache_data
     def plot_3(self):
         print("Creating plot 3...")
 
         # Filter the dataframe by the provided department code
-        dept_data = self.properties_summarized[self.properties_summarized['code_departement'] == self.selected_department]
+        dept_data = self.properties_summarized[
+            self.properties_summarized["code_departement"] == self.selected_department
+        ]
 
         # Generate a brighter linear color palette
-        years = sorted(dept_data['Year'].unique())
-        local_types = dept_data['type_local'].unique()
+        years = sorted(dept_data["Year"].unique())
+        local_types = dept_data["type_local"].unique()
 
         # Liste des couleurs bleues
-        blue_palette = ['#08519c', '#3182bd', '#6baed6', '#bdd7e7', '#eff3ff', '#ffffff']
+        blue_palette = [
+            "#08519c",
+            "#3182bd",
+            "#6baed6",
+            "#bdd7e7",
+            "#eff3ff",
+            "#ffffff",
+        ]
 
         # Assurez-vous que le nombre de couleurs dans la palette correspond au nombre d'années
         if len(blue_palette) != len(years):
-            st.error("Le nombre de couleurs dans la palette ne correspond pas au nombre d'années.")
+            st.error(
+                "Le nombre de couleurs dans la palette ne correspond pas au nombre d'années."
+            )
             return
 
         if self.selected_plot_type == "Graphique en barres":
             cols = st.columns(len(local_types))
 
             # Associez chaque année à une couleur
-            year_to_color = dict(zip(sorted(years), blue_palette))            
+            year_to_color = dict(zip(sorted(years), blue_palette))
 
             for idx, local_type in enumerate(local_types):
-                annual_average_diff, percentage_diff = calculate_median_difference(self.properties_summarized, self.selected_department, self.normalize_by_area, local_type, self.selected_year)
+                annual_average_diff, percentage_diff = calculate_median_difference(
+                    self.properties_summarized,
+                    self.selected_department,
+                    self.normalize_by_area,
+                    local_type,
+                    self.selected_year,
+                )
                 with cols[idx]:
                     if annual_average_diff > 0:
-                        st.metric(label=local_type, value=f"+{annual_average_diff:.2f} €", delta=f"{percentage_diff:.2f} % depuis {int(self.selected_year)-1}")
+                        st.metric(
+                            label=local_type,
+                            value=f"+{annual_average_diff:.2f} €",
+                            delta=f"{percentage_diff:.2f} % depuis {int(self.selected_year)-1}",
+                        )
                     else:
-                        st.metric(label=local_type, value=f"{annual_average_diff:.2f} €", delta=f"{percentage_diff:.2f} % depuis {int(self.selected_year)-1}")
+                        st.metric(
+                            label=local_type,
+                            value=f"{annual_average_diff:.2f} €",
+                            delta=f"{percentage_diff:.2f} % depuis {int(self.selected_year)-1}",
+                        )
 
-                    prop_data = dept_data[dept_data['type_local'] == local_type]
+                    prop_data = dept_data[dept_data["type_local"] == local_type]
 
                     # Créez une liste pour stocker les tracés
                     traces = []
-                    for year in prop_data['Year'].unique():
-                        year_data = prop_data[prop_data['Year'] == year]
-                        traces.append(go.Bar(x=year_data['Year'], y=year_data[self.value_column], name=str(year), marker_color=year_to_color[year]))
-                    
-                    layout = go.Layout(barmode='group', 
-                                       height=400, 
-                                       showlegend=False, 
-                                        title={
-                                            'text': f'Variations de 2018 à {self.selected_year}',
-                                            'x': 0.5, # Centre le titre en largeur
-                                            'xanchor': 'center', # Ancre le titre au centre
-                                            'yanchor': 'top', # Positionne le titre en haut
-                                            'font': {
-                                                'family': "Arial",
-                                                'color': "white"
-                                            }
-                                        }
+                    for year in prop_data["Year"].unique():
+                        year_data = prop_data[prop_data["Year"] == year]
+                        traces.append(
+                            go.Bar(
+                                x=year_data["Year"],
+                                y=year_data[self.value_column],
+                                name=str(year),
+                                marker_color=year_to_color[year],
+                            )
+                        )
+
+                    layout = go.Layout(
+                        barmode="group",
+                        height=400,
+                        showlegend=False,
+                        title={
+                            "text": f"Variations de 2018 à {self.selected_year}",
+                            "x": 0.5,  # Centre le titre en largeur
+                            "xanchor": "center",  # Ancre le titre au centre
+                            "yanchor": "top",  # Positionne le titre en haut
+                            "font": {"family": "Arial", "color": "white"},
+                        },
                     )
 
                     fig = go.Figure(data=traces, layout=layout)
                     st.plotly_chart(fig, use_container_width=True)
 
         else:
-
             cols = st.columns(len(local_types))
 
             for idx, local_type in enumerate(local_types):
-
-                annual_average_diff, percentage_diff = calculate_median_difference(self.properties_summarized, self.selected_department, self.normalize_by_area, local_type, self.selected_year)
+                annual_average_diff, percentage_diff = calculate_median_difference(
+                    self.properties_summarized,
+                    self.selected_department,
+                    self.normalize_by_area,
+                    local_type,
+                    self.selected_year,
+                )
 
                 with cols[idx]:
                     if annual_average_diff > 0:
-                        st.metric(label=local_type, value=f"+{annual_average_diff:.2f} €", delta=f"{percentage_diff:.2f} % depuis {data_sources_origin.get('available_years_datagouv')[0]}")
+                        st.metric(
+                            label=local_type,
+                            value=f"+{annual_average_diff:.2f} €",
+                            delta=f"{percentage_diff:.2f} % depuis {data_sources_origin.get('available_years_datagouv')[0]}",
+                        )
                     else:
-                        st.metric(label=local_type, value=f"{annual_average_diff:.2f} €", delta=f"{percentage_diff:.2f} % depuis {data_sources_origin.get('available_years_datagouv')[0]}")
+                        st.metric(
+                            label=local_type,
+                            value=f"{annual_average_diff:.2f} €",
+                            delta=f"{percentage_diff:.2f} % depuis {data_sources_origin.get('available_years_datagouv')[0]}",
+                        )
 
-            fig = px.line(dept_data, 
-                          x='Year', 
-                          y=self.value_column, 
-                          color='type_local',
-                          labels={"median_value": "Prix médian en €", "Year": "Année"},
-                          markers=True,
-                          height=600,
-                          title=f"Variations de 2018 à {self.selected_year}")
+            fig = px.line(
+                dept_data,
+                x="Year",
+                y=self.value_column,
+                color="type_local",
+                labels={"median_value": "Prix médian en €", "Year": "Année"},
+                markers=True,
+                height=600,
+                title=f"Variations de 2018 à {self.selected_year}",
+            )
 
-            fig.update_layout(xaxis_title="Type de bien",
-                              yaxis_title="Prix médian en €",
-                              legend_title="Type de bien",
-                              height=600)
-            fig.update_layout(legend_orientation="h", 
-                            legend=dict(y=1.1, x=0.5, xanchor='center', title_text=''))
-            
+            fig.update_layout(
+                xaxis_title="Type de bien",
+                yaxis_title="Prix médian en €",
+                legend_title="Type de bien",
+                height=600,
+            )
+            fig.update_layout(
+                legend_orientation="h",
+                legend=dict(y=1.1, x=0.5, xanchor="center", title_text=""),
+            )
+
             st.plotly_chart(fig, use_container_width=True)
 
     def plot_4_widgets(self):
         print("Creating plot 4 widgets...")
-        unique_postcodes = self.properties_input['code_postal'].unique()
-                
+        unique_postcodes = self.properties_input["code_postal"].unique()
+
         ### Set up the postal code selectbox and update button
         self.selected_postcode = st.selectbox("Code postal", sorted(unique_postcodes))
 
     def plot_4(self):
         print("Creating plot 4...")
 
-        self.fig4_title.markdown(f"### Fig 4. Distribution des prix unitaires pour tous les types de biens dans le :blue[{self.selected_postcode}] en :blue[{self.selected_year}]")
+        self.fig4_title.markdown(
+            f"### Fig 4. Distribution des prix unitaires pour tous les types de biens dans le :blue[{self.selected_postcode}] en :blue[{self.selected_year}]"
+        )
 
         # Si le bouton est cliqué, mettez à jour la carte avec les données du code postal sélectionné
-        filtered_by_postcode = self.properties_input[self.properties_input['code_postal'] == self.selected_postcode]
+        filtered_by_postcode = self.properties_input[
+            self.properties_input["code_postal"] == self.selected_postcode
+        ]
 
-        unique_local_types = filtered_by_postcode['type_local'].unique()
+        unique_local_types = filtered_by_postcode["type_local"].unique()
 
         # Créer le nombre approprié de colonnes
         cols = st.columns(len(unique_local_types))
 
-        color_palette = sns.color_palette('tab10', len(unique_local_types)).as_hex()
+        color_palette = sns.color_palette("tab10", len(unique_local_types)).as_hex()
         colors = dict(zip(unique_local_types, color_palette))
 
         for idx, local_type in enumerate(unique_local_types):
-
-            subset = filtered_by_postcode[filtered_by_postcode['type_local'] == local_type]
-            trace = go.Box(y=subset['valeur_fonciere'], 
-                        name=local_type, 
-                        marker_color=colors[local_type], 
-                        boxpoints='all', 
-                        jitter=0.3, 
-                        pointpos=0, 
-                        marker=dict(opacity=0.5))
+            subset = filtered_by_postcode[
+                filtered_by_postcode["type_local"] == local_type
+            ]
+            trace = go.Box(
+                y=subset["valeur_fonciere"],
+                name=local_type,
+                marker_color=colors[local_type],
+                boxpoints="all",
+                jitter=0.3,
+                pointpos=0,
+                marker=dict(opacity=0.5),
+            )
 
             fig = go.Figure(data=[trace])
-            fig.update_layout(yaxis_title='Prix médian en €')
+            fig.update_layout(yaxis_title="Prix médian en €")
             fig.update_layout(height=600)
-            fig.update_layout(legend_orientation="h", legend=dict(y=1.1, x=0.5, xanchor='center'))
+            fig.update_layout(
+                legend_orientation="h", legend=dict(y=1.1, x=0.5, xanchor="center")
+            )
             fig.update_layout(margin=dict(t=20, b=80, l=50, r=50))
-            
+
             # Retirer les labels des x
             fig.update_xaxes(showticklabels=False)
 
             # Ajoutez un titre en utilisant st.markdown() avant d'afficher le graphique
             with cols[idx]:
-                st.markdown(f"<div style='text-align: center;'>{local_type}</div>", unsafe_allow_html=True)
+                st.markdown(
+                    f"<div style='text-align: center;'>{local_type}</div>",
+                    unsafe_allow_html=True,
+                )
                 st.plotly_chart(fig, use_container_width=True)
