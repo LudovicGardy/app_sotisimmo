@@ -237,7 +237,7 @@ class Plotter:
     # @st.cache_data
     def plot_1(self):
         st.markdown(
-            f"###Distribution des prix médians pour tous les types de biens dans le :blue[{self.selected_department}] en :blue[{self.selected_year}]"
+            f"### Distribution des prix médians pour tous les types de biens dans le :blue[{self.selected_department}] en :blue[{self.selected_year}]"
         )
 
         print("Creating plot 1...")
@@ -283,7 +283,7 @@ class Plotter:
 
     def plot_2(self):
         st.markdown(
-            f"###Distribution des prix médians pour les :blue[{self.selected_local_type.lower()}s] dans le :blue[{self.selected_department}] en :blue[{self.selected_year}]"
+            f"### Distribution des prix médians pour les :blue[{self.selected_local_type.lower()}s] dans le :blue[{self.selected_department}] en :blue[{self.selected_year}]"
         )
         st.markdown("""Les nombres au-dessus des barres représentent le nombre de biens par code postal. 
                     Ils fournissent un contexte sur le volume des ventes pour chaque zone.""")
@@ -340,20 +340,20 @@ class Plotter:
             != int(data_sources_origin.get("available_years_datagouv")[-1]) + 1
         ):
             st.markdown(
-                f"""Evolution des prix médians des :blue[{self.selected_local_type.lower()}s] dans le :blue[{self.selected_department}] entre :blue[{int(self.selected_year)-1}] et :blue[{self.selected_year}]"""
+                f"""### Evolution des prix médians des :blue[{self.selected_local_type.lower()}s] dans le :blue[{self.selected_department}] entre :blue[{int(self.selected_year)-1}] et :blue[{self.selected_year}]"""
             )
             self.plot_3()
         elif int(self.selected_year) == int(
             data_sources_origin.get("available_years_datagouv")[0]
         ):
             st.warning(
-                "Fig 3. ne peut pas être calculée car l'année sélectionnée est 2018. Or, les données de 2017 ne sont pas connues pas ce programme."
+                "La figure ne peut pas être calculée car l'année sélectionnée est 2018. Or, les données de 2017 ne sont pas connues pas ce programme."
             )
             st.divider()
         elif int(self.selected_year) == int(
             data_sources_origin.get("available_years_datagouv")[-1] + 1
         ):
-            st.warning("Fig 3. ne peut pas être calculée pour l'année 2024.")
+            st.warning("La figure ne peut pas être calculée pour l'année 2024.")
             st.divider()
 
     def plot_3(self):
@@ -520,7 +520,7 @@ class Plotter:
         print("Creating plot 4...")
 
         self.fig4_title.markdown(
-            f"###Distribution des prix unitaires pour tous les types de biens dans le :blue[{self.selected_postcode}] en :blue[{self.selected_year}]"
+            f"### Distribution des prix unitaires pour tous les types de biens dans le :blue[{self.selected_postcode}] en :blue[{self.selected_year}]"
         )
 
         # Si le bouton est cliqué, mettez à jour la carte avec les données du code postal sélectionné
