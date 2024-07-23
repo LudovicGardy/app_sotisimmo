@@ -53,31 +53,29 @@ class Plotter:
 
         ### Section 1
         with self.tabs[0]:
-            self.plot_map_widgets()
-            st.divider()
+            with st.container(border=True):
+                self.plot_map_widgets()
 
         ### Section 2
         with self.tabs[1]:
-            self.plot_1()
-            st.divider()
+            with st.container(border=True):
+                self.plot_1()
 
         ### Section 3
         with self.tabs[2]:
-            self.plot_2()
-            st.divider()
+            with st.container(border=True):
+                self.plot_2()
 
         ### Section 4
         with self.tabs[3]:
-            self.plot_3_condition()
+            with st.container(border=True):
+                self.plot_3_condition()
 
         ### Section 5
         ##- Defining a modifiable title using a placeholder (empty string)
         with self.tabs[4]:
-            self.fig4_title = st.empty()
-            self.fig4_title.markdown(
-                f"###Distribution des prix unitaires pour tous les types de biens dans le :blue[votre quartier] en :blue[{self.selected_year}]"
-            )
-            self.plot_4()
+            with st.container(border=True):
+                self.plot_4()
 
         ### Section 6
         if self.chatbot_checkbox:
@@ -88,26 +86,25 @@ class Plotter:
             #     self.chatbot_Llama2_7B()
 
     def plot_map_widgets(self):
-        with st.container(border=True):
-            # Afficher l'alerte si l'année sélectionnée est 2024
-            if (
-                f"{data_sources_origin.get('available_years_datagouv')[-1]+1}"
-                in self.selected_year
-            ):
-                st.warning(f"""⚠️ Les tarifs pour {data_sources_origin.get('available_years_datagouv')[-1]+1} sont mis à jour régulièrement par le robot Sotis-IMMO 🤖.
-                            À la différence des données de {data_sources_origin.get('available_years_datagouv')[0]}-{data_sources_origin.get('available_years_datagouv')[-1]}, qui concernent des biens déjà vendus, celles de {data_sources_origin.get('available_years_datagouv')[-1]+1} présentent 
-                            les offres en quasi temps-réel. Toutefois, elles sont moins précises sur le plan géographique, 
-                            étant regroupées par zones approximatives, contrairement aux données des années précédentes, qui sont 
-                            présentées par adresse.""")
+        # Afficher l'alerte si l'année sélectionnée est 2024
+        if (
+            f"{data_sources_origin.get('available_years_datagouv')[-1]+1}"
+            in self.selected_year
+        ):
+            st.warning(f"""⚠️ Les tarifs pour {data_sources_origin.get('available_years_datagouv')[-1]+1} sont mis à jour régulièrement par le robot Sotis-IMMO 🤖.
+                        À la différence des données de {data_sources_origin.get('available_years_datagouv')[0]}-{data_sources_origin.get('available_years_datagouv')[-1]}, qui concernent des biens déjà vendus, celles de {data_sources_origin.get('available_years_datagouv')[-1]+1} présentent 
+                        les offres en quasi temps-réel. Toutefois, elles sont moins précises sur le plan géographique, 
+                        étant regroupées par zones approximatives, contrairement aux données des années précédentes, qui sont 
+                        présentées par adresse.""")
 
-            if (
-                "selected_postcode_title" in st.session_state
-                and st.session_state.selected_postcode_title
-            ):
-                map_title = f"Distribution des prix unitaires pour les :blue[{self.selected_local_type.lower()}s] dans le :blue[{st.session_state.selected_postcode_title}] en :blue[{self.selected_year}]"
-            else:
-                map_title = f"Distribution des prix unitaires pour les :blue[{self.selected_local_type.lower()}s] dans le :blue[{self.selected_department}] en :blue[{self.selected_year}]"
-            st.markdown(f"### {map_title}")
+        if (
+            "selected_postcode_title" in st.session_state
+            and st.session_state.selected_postcode_title
+        ):
+            map_title = f"Distribution des prix unitaires pour les :blue[{self.selected_local_type.lower()}s] dans le :blue[{st.session_state.selected_postcode_title}] en :blue[{self.selected_year}]"
+        else:
+            map_title = f"Distribution des prix unitaires pour les :blue[{self.selected_local_type.lower()}s] dans le :blue[{self.selected_department}] en :blue[{self.selected_year}]"
+        st.markdown(f"### {map_title}")
 
         print("Creating map...")
         col1, col2 = st.columns(2)  # Créer deux colonnes
@@ -511,6 +508,11 @@ class Plotter:
             st.plotly_chart(fig, use_container_width=True)
 
     def plot_4(self):
+        self.fig4_title = st.empty()
+        self.fig4_title.markdown(
+            f"###Distribution des prix unitaires pour tous les types de biens dans le :blue[votre quartier] en :blue[{self.selected_year}]"
+        )
+
         print("Creating plot 4 widgets...")
         unique_postcodes = self.properties_input["code_postal"].unique()
 
