@@ -30,14 +30,6 @@ class Plotter:
         """
         print("Creating plots...")
 
-        if self.properties_input is None:
-            st.error(
-                "Pas d'information disponible pour le département {} en {}. Sélectionnez une autre configuration.".format(
-                    self.selected_department, self.selected_year
-                )
-            )
-            return
-
         # Set the title of the section
         # st.markdown('# Sotis A.I. Immobilier')
         st.markdown("## Visualisez les prix de l'immobilier en France")
@@ -49,88 +41,42 @@ class Plotter:
                     immobilières effectuées entre {data_sources_origin.get('available_years_datagouv')[0]} et {data_sources_origin.get('available_years_datagouv')[-1]}.
         """)
 
+        self.tabs = st.tabs(["Map", "Lines", "Bars", "Evolution", "Local"])
+
+        if self.properties_input is None:
+            st.error(
+                "Pas d'information disponible pour le département {} en {}. Sélectionnez une autre configuration.".format(
+                    self.selected_department, self.selected_year
+                )
+            )
+            return
+
         ### Section 1
-        if "Carte" in self.selected_plots:
-            with st.container(border=True):
-                # Afficher l'alerte si l'année sélectionnée est 2024
-                if (
-                    f"{data_sources_origin.get('available_years_datagouv')[-1]+1}"
-                    in self.selected_year
-                ):
-                    st.warning(f"""⚠️ Les tarifs pour {data_sources_origin.get('available_years_datagouv')[-1]+1} sont mis à jour régulièrement par le robot Sotis-IMMO 🤖.
-                                À la différence des données de {data_sources_origin.get('available_years_datagouv')[0]}-{data_sources_origin.get('available_years_datagouv')[-1]}, qui concernent des biens déjà vendus, celles de {data_sources_origin.get('available_years_datagouv')[-1]+1} présentent 
-                                les offres en quasi temps-réel. Toutefois, elles sont moins précises sur le plan géographique, 
-                                étant regroupées par zones approximatives, contrairement aux données des années précédentes, qui sont 
-                                présentées par adresse.""")
-
-                if (
-                    "selected_postcode_title" in st.session_state
-                    and st.session_state.selected_postcode_title
-                ):
-                    map_title = f"Distribution des prix unitaires pour les :blue[{self.selected_local_type.lower()}s] dans le :blue[{st.session_state.selected_postcode_title}] en :blue[{self.selected_year}]"
-                else:
-                    map_title = f"Distribution des prix unitaires pour les :blue[{self.selected_local_type.lower()}s] dans le :blue[{self.selected_department}] en :blue[{self.selected_year}]"
-                st.markdown(f"### {map_title}")
-
-                self.plot_map_widgets()
-                self.plot_map()
-            # st.divider()
+        with self.tabs[0]:
+            self.plot_map_widgets()
+            st.divider()
 
         ### Section 2
-        if "Fig. 1" in self.selected_plots:
-            st.markdown(
-                f"### Fig 1. Distribution des prix médians pour tous les types de biens dans le :blue[{self.selected_department}] en :blue[{self.selected_year}]"
-            )
+        with self.tabs[1]:
             self.plot_1()
             st.divider()
 
         ### Section 3
-        if "Fig. 2" in self.selected_plots:
-            st.markdown(
-                f"### Fig 2. Distribution des prix médians pour les :blue[{self.selected_local_type.lower()}s] dans le :blue[{self.selected_department}] en :blue[{self.selected_year}]"
-            )
-            st.markdown("""Les nombres au-dessus des barres représentent le nombre de biens par code postal. 
-                        Ils fournissent un contexte sur le volume des ventes pour chaque zone.""")
-            self.plot_2_widgets()
+        with self.tabs[2]:
             self.plot_2()
             st.divider()
 
         ### Section 4
-        if (
-            "Fig. 3" in self.selected_plots
-            and int(self.selected_year)
-            != int(data_sources_origin.get("available_years_datagouv")[0])
-            and int(self.selected_year)
-            != int(data_sources_origin.get("available_years_datagouv")[-1]) + 1
-        ):
-            st.markdown(
-                f"""### Fig 3. Evolution des prix médians des :blue[{self.selected_local_type.lower()}s] dans le :blue[{self.selected_department}] entre :blue[{int(self.selected_year)-1}] et :blue[{self.selected_year}]"""
-            )
-            self.plot_3_widgets()
-            self.plot_3()
-        elif int(self.selected_year) == int(
-            data_sources_origin.get("available_years_datagouv")[0]
-        ):
-            if "Fig. 3" in self.selected_plots:
-                st.warning(
-                    "Fig 3. ne peut pas être calculée car l'année sélectionnée est 2018. Or, les données de 2017 ne sont pas connues pas ce programme."
-                )
-                st.divider()
-        elif int(self.selected_year) == int(
-            data_sources_origin.get("available_years_datagouv")[-1] + 1
-        ):
-            if "Fig. 3" in self.selected_plots:
-                st.warning("Fig 3. ne peut pas être calculée pour l'année 2024.")
-                st.divider()
+        with self.tabs[3]:
+            self.plot_3_condition()
 
         ### Section 5
         ##- Defining a modifiable title using a placeholder (empty string)
-        if "Fig. 4" in self.selected_plots:
+        with self.tabs[4]:
             self.fig4_title = st.empty()
             self.fig4_title.markdown(
-                f"### Fig 4. Distribution des prix unitaires pour tous les types de biens dans le :blue[votre quartier] en :blue[{self.selected_year}]"
+                f"###Distribution des prix unitaires pour tous les types de biens dans le :blue[votre quartier] en :blue[{self.selected_year}]"
             )
-            self.plot_4_widgets()
             self.plot_4()
 
         ### Section 6
@@ -142,6 +88,27 @@ class Plotter:
             #     self.chatbot_Llama2_7B()
 
     def plot_map_widgets(self):
+        with st.container(border=True):
+            # Afficher l'alerte si l'année sélectionnée est 2024
+            if (
+                f"{data_sources_origin.get('available_years_datagouv')[-1]+1}"
+                in self.selected_year
+            ):
+                st.warning(f"""⚠️ Les tarifs pour {data_sources_origin.get('available_years_datagouv')[-1]+1} sont mis à jour régulièrement par le robot Sotis-IMMO 🤖.
+                            À la différence des données de {data_sources_origin.get('available_years_datagouv')[0]}-{data_sources_origin.get('available_years_datagouv')[-1]}, qui concernent des biens déjà vendus, celles de {data_sources_origin.get('available_years_datagouv')[-1]+1} présentent 
+                            les offres en quasi temps-réel. Toutefois, elles sont moins précises sur le plan géographique, 
+                            étant regroupées par zones approximatives, contrairement aux données des années précédentes, qui sont 
+                            présentées par adresse.""")
+
+            if (
+                "selected_postcode_title" in st.session_state
+                and st.session_state.selected_postcode_title
+            ):
+                map_title = f"Distribution des prix unitaires pour les :blue[{self.selected_local_type.lower()}s] dans le :blue[{st.session_state.selected_postcode_title}] en :blue[{self.selected_year}]"
+            else:
+                map_title = f"Distribution des prix unitaires pour les :blue[{self.selected_local_type.lower()}s] dans le :blue[{self.selected_department}] en :blue[{self.selected_year}]"
+            st.markdown(f"### {map_title}")
+
         print("Creating map...")
         col1, col2 = st.columns(2)  # Créer deux colonnes
 
@@ -191,6 +158,8 @@ class Plotter:
         ):
             st.success(f"""💡 Pour une meilleure visibilité des données géographiques de {data_sources_origin.get('available_years_datagouv')[-1]+1}, il est conseillé de cocher la case
                         'Eviter la superposition des points' ci-dessus.""")
+
+        self.plot_map()
 
     # @st.cache_data
     def plot_map(self):
@@ -267,6 +236,10 @@ class Plotter:
 
     # @st.cache_data
     def plot_1(self):
+        st.markdown(
+            f"###Distribution des prix médians pour tous les types de biens dans le :blue[{self.selected_department}] en :blue[{self.selected_year}]"
+        )
+
         print("Creating plot 1...")
         grouped_data = (
             self.properties_input.groupby(["code_postal", "type_local"])
@@ -308,7 +281,13 @@ class Plotter:
         )
         st.plotly_chart(fig, use_container_width=True)
 
-    def plot_2_widgets(self):
+    def plot_2(self):
+        st.markdown(
+            f"###Distribution des prix médians pour les :blue[{self.selected_local_type.lower()}s] dans le :blue[{self.selected_department}] en :blue[{self.selected_year}]"
+        )
+        st.markdown("""Les nombres au-dessus des barres représentent le nombre de biens par code postal. 
+                    Ils fournissent un contexte sur le volume des ventes pour chaque zone.""")
+
         print("Creating plot 2 widgets...")
 
         # Check for orientation preference
@@ -318,8 +297,6 @@ class Plotter:
             label_visibility="hidden",
         )
 
-    # @st.cache_data
-    def plot_2(self):
         print("Creating plot 2...")
 
         # Filtring the dataframe by property type
@@ -355,7 +332,31 @@ class Plotter:
         fig.update_traces(text=grouped["Count"], textposition="outside")
         st.plotly_chart(fig, use_container_width=True)
 
-    def plot_3_widgets(self):
+    def plot_3_condition(self):
+        if (
+            int(self.selected_year)
+            != int(data_sources_origin.get("available_years_datagouv")[0])
+            and int(self.selected_year)
+            != int(data_sources_origin.get("available_years_datagouv")[-1]) + 1
+        ):
+            st.markdown(
+                f"""Evolution des prix médians des :blue[{self.selected_local_type.lower()}s] dans le :blue[{self.selected_department}] entre :blue[{int(self.selected_year)-1}] et :blue[{self.selected_year}]"""
+            )
+            self.plot_3()
+        elif int(self.selected_year) == int(
+            data_sources_origin.get("available_years_datagouv")[0]
+        ):
+            st.warning(
+                "Fig 3. ne peut pas être calculée car l'année sélectionnée est 2018. Or, les données de 2017 ne sont pas connues pas ce programme."
+            )
+            st.divider()
+        elif int(self.selected_year) == int(
+            data_sources_origin.get("available_years_datagouv")[-1] + 1
+        ):
+            st.warning("Fig 3. ne peut pas être calculée pour l'année 2024.")
+            st.divider()
+
+    def plot_3(self):
         print("Creating plot 3 widgets...")
         # Add a selectbox for choosing between bar and line plot
         # plot_types = ["Bar", "Line"]
@@ -372,8 +373,6 @@ class Plotter:
             "Median Value SQM" if self.normalize_by_area else "Median Value"
         )
 
-    # @st.cache_data
-    def plot_3(self):
         print("Creating plot 3...")
 
         # Filter the dataframe by the provided department code
@@ -511,18 +510,17 @@ class Plotter:
 
             st.plotly_chart(fig, use_container_width=True)
 
-    def plot_4_widgets(self):
+    def plot_4(self):
         print("Creating plot 4 widgets...")
         unique_postcodes = self.properties_input["code_postal"].unique()
 
         ### Set up the postal code selectbox and update button
         self.selected_postcode = st.selectbox("Code postal", sorted(unique_postcodes))
 
-    def plot_4(self):
         print("Creating plot 4...")
 
         self.fig4_title.markdown(
-            f"### Fig 4. Distribution des prix unitaires pour tous les types de biens dans le :blue[{self.selected_postcode}] en :blue[{self.selected_year}]"
+            f"###Distribution des prix unitaires pour tous les types de biens dans le :blue[{self.selected_postcode}] en :blue[{self.selected_year}]"
         )
 
         # Si le bouton est cliqué, mettez à jour la carte avec les données du code postal sélectionné

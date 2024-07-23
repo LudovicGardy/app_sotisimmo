@@ -21,7 +21,7 @@ from ..config import (
     firebase_credentials,
     page_config,
 )
-from .ui_components import display_sidebar, init_page_config, init_session_state
+from .ui_components import display_sidebar
 
 firebase_cred = firebase_credentials()
 azure_cred = azure_credentials()
@@ -40,17 +40,13 @@ else:
     print("No credentials were found. Analytics will not be tracked.")
 
 
-### App
-class App(Plotter):
+class Home(Plotter):
     """
     This class creates a Streamlit app that displays the average price of real estate properties in France, by department.
     """
 
     def __init__(self):
         print("Init the app...")
-
-        # init_page_config(page_config)
-        init_session_state()
 
         st.markdown(page_config().get("markdown"), unsafe_allow_html=True)
 
@@ -141,7 +137,7 @@ class App(Plotter):
                 bigquery_cred, self.selected_department
             )
 
-        if not self.properties_input is None:
+        if self.properties_input is not None:
             ### Set up a copy of the dataframe
             self.properties_input = self.properties_input.copy()
 
@@ -166,13 +162,6 @@ class App(Plotter):
                     .round()
                     .astype(int)
                 )
-
-            # Ajoutez ceci après les autres éléments dans la barre latérale
-            self.selected_plots = st.multiselect(
-                "Supprimer ou ajouter des graphiques",
-                ["Carte", "Fig. 1", "Fig. 2", "Fig. 3", "Fig. 4"],
-                ["Carte", "Fig. 1", "Fig. 2", "Fig. 3", "Fig. 4"],
-            )
 
             ### Set up the chatbot
             st.divider()
@@ -212,4 +201,4 @@ if firebase_cred:
     )
 
 if __name__ == "__main__":
-    App()
+    Home()
