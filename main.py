@@ -9,6 +9,7 @@ from modules.GUI.ui_components import (
 init_page_config(page_config)
 
 
+
 class App:
     def __init__(self):
         init_session_state()

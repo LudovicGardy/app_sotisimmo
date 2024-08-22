@@ -41,7 +41,7 @@ class Plotter:
                     immobilières effectuées entre {data_sources_origin.get('available_years_datagouv')[0]} et {data_sources_origin.get('available_years_datagouv')[-1]}.
         """)
 
-        self.tabs = st.tabs(["Map", "Lines", "Bars", "Evolution", "Local"])
+        self.tabs = st.tabs(["Carte", "Département", "Commune", "Evolution des prix"])
 
         if self.properties_input is None:
             st.error(
@@ -59,23 +59,21 @@ class Plotter:
         ### Section 2
         with self.tabs[1]:
             with st.container(border=True):
-                self.plot_1()
-
-        ### Section 3
-        with self.tabs[2]:
-            with st.container(border=True):
                 self.plot_2()
 
+            with st.container(border=True):
+                self.plot_1()
+
         ### Section 4
+        with self.tabs[2]:
+            with st.container(border=True):
+                self.plot_4()
+
+        ### Section 3
+        ##- Defining a modifiable title using a placeholder (empty string)
         with self.tabs[3]:
             with st.container(border=True):
                 self.plot_3_condition()
-
-        ### Section 5
-        ##- Defining a modifiable title using a placeholder (empty string)
-        with self.tabs[4]:
-            with st.container(border=True):
-                self.plot_4()
 
         ### Section 6
         if self.chatbot_checkbox:
