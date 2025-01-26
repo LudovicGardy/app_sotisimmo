@@ -1,16 +1,16 @@
-# Utiliser une image Python de base (3.8-slim-buster)
-FROM python:3.9-slim-buster
+# Python image
+FROM python:3.11-slim-buster
 
-# Définir le dossier de travail
-WORKDIR /app
+# Set the working directory
+WORKDIR .
 
-# Copier le fichier requirements.txt et installer les dépendances
+# Copy the requirements.txt file and install dependencies
 COPY requirements.txt .
-RUN pip install --upgrade pip
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
-# Copier tout le reste du code source
+# Copy the rest of the source code
 COPY . .
 
-# Exécuter votre script Python
+# Run Python script
 CMD ["streamlit", "run", "main.py"]
