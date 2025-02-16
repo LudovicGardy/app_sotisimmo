@@ -15,8 +15,8 @@ from modules.GUI.plotter import Plotter
 
 ### Relative imports
 from ..config import (
-    azure_credentials,
-    bigquery_credentials,
+    # azure_credentials,
+    # bigquery_credentials,
     data_URL,
     firebase_credentials,
     page_config,
@@ -24,8 +24,8 @@ from ..config import (
 from .ui_components import display_sidebar
 
 firebase_cred = firebase_credentials()
-azure_cred = azure_credentials()
-bigquery_cred = bigquery_credentials()
+# azure_cred = azure_credentials()
+# bigquery_cred = bigquery_credentials()
 data_sources_origin = data_URL()
 
 if firebase_cred:
