@@ -75,7 +75,7 @@ Here's a little app that lets you dive into real estate transactions in France f
         cd [path-to-app-folder-containing-Dockerfile]
         ```
 
-3. **Build the image (if does not already exit)**
+3. **Build the image (if does not already exist)**
     - For multiple containers:
         ```bash
         docker-compose up --build
