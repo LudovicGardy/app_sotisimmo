@@ -48,9 +48,7 @@ def fetch_data_BigQuery(_cred_dict: dict[str, str], selected_dept: str) -> pd.Da
         json.dump(_cred_dict, credentials_file)
 
     # Utiliser le fichier JSON temporaire pour créer les credentials
-    credentials = service_account.Credentials.from_service_account_file(
-        credentials_path
-    )
+    credentials = service_account.Credentials.from_service_account_file(credentials_path)
     client = bigquery.Client(credentials=credentials, project=_cred_dict["project_id"])
 
     # Supprimer le fichier temporaire après utilisation
@@ -65,7 +63,7 @@ def fetch_data_BigQuery(_cred_dict: dict[str, str], selected_dept: str) -> pd.Da
             longitude,
             latitude
         FROM
-            `{env_variables.get('BIGQUERY_PROJECT_ID')}.{env_variables.get('BIGQUERY_DATASET_ID')}.{env_variables.get('BIGQUERY_TABLE')}`
+            `{env_variables.get("BIGQUERY_PROJECT_ID")}.{env_variables.get("BIGQUERY_DATASET_ID")}.{env_variables.get("BIGQUERY_TABLE")}`
         WHERE
             code_departement = '{selected_dept}' AND
             type_local IS NOT NULL
@@ -91,22 +89,22 @@ def fetch_data_gouv(selected_dept: str, selected_year: int) -> pd.DataFrame:
 
     Data are organized as follows:
     - 2018
-     - 01
-        - appartement
-        - maison
+        - 01
+            - appartement
+            - maison
+            - ...
+        - 02
+        - 03
         - ...
-     - 02
-     - 03
-     - ...
 
     - 2019
-     - 01
-        - appartement
-        - maison
+        - 01
+            - appartement
+            - maison
+            - ...
+        - 02
+        - 03
         - ...
-     - 02
-     - 03
-     - ...
 
     ...
 
@@ -114,16 +112,14 @@ def fetch_data_gouv(selected_dept: str, selected_year: int) -> pd.DataFrame:
     """
 
     print(
-        "Fetching data from the French open data portal... Year: {}, Department: {}".format(
-            selected_year, selected_dept
-        )
+        "Fetching data from the French open data portal... Year: {}, Department: {}".format(selected_year, selected_dept)
     )
     properties_input = None  # Initialisez properties_input à None ou pd.DataFrame()
 
     # Data from government are available only for the years 2018-2022
     try:
         ### Download data from the French open data portal
-        url = f'{data_URL().get("datagouv_source_URL")}/{selected_year}/departements/{selected_dept}.csv.gz'
+        url = f"{data_URL().get('datagouv_source_URL')}/{selected_year}/departements/{selected_dept}.csv.gz"
         response = requests.get(url)
 
         ### Store data in a buffer
@@ -163,11 +159,7 @@ def fetch_data_gouv(selected_dept: str, selected_year: int) -> pd.DataFrame:
 
         ### Add leading zeros to postal code
         properties_input["code_postal"] = (
-            properties_input["code_postal"]
-            .astype(float)
-            .astype(int)
-            .astype(str)
-            .str.zfill(5)
+            properties_input["code_postal"].astype(float).astype(int).astype(str).str.zfill(5)
         )
 
     except Exception as e:
