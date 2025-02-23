@@ -12,5 +12,11 @@ RUN pip install --upgrade pip && \
 # Copy the rest of the source code
 COPY . .
 
+# Define environment variable for the port
+ENV PORT=8502
+
+# Expose the port
+EXPOSE 8502
+
 # Run Python script
-CMD ["streamlit", "run", "main.py"]
+CMD ["streamlit", "run", "main.py", "--server.port", "$PORT"]
