@@ -1,6 +1,7 @@
 import json
 import os
 from io import BytesIO
+import tempfile
 
 import pandas as pd
 import requests
@@ -42,10 +43,10 @@ def fetch_data_BigQuery(_cred_dict: dict[str, str], selected_dept: str) -> pd.Da
 
     env_variables = load_configurations()
 
-    # Créer un fichier JSON temporaire pour stocker les credentials et les envoyer à BigQuery
-    credentials_path = "temp_credentials.json"
-    with open(credentials_path, "w") as credentials_file:
+    # Créer un fichier JSON temporaire à l'aide de tempfile
+    with tempfile.NamedTemporaryFile(mode="w", delete=False) as credentials_file:
         json.dump(_cred_dict, credentials_file)
+        credentials_path = credentials_file.name
 
     # Utiliser le fichier JSON temporaire pour créer les credentials
     credentials = service_account.Credentials.from_service_account_file(credentials_path)
