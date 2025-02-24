@@ -14,12 +14,8 @@ def calculate_median_difference(
     from_year = to_year - 1
 
     # Filter the summarized data for the given department
-    properties_summarized = properties_summarized[
-        properties_summarized["code_departement"] == selected_department
-    ]
-    properties_summarized = properties_summarized[
-        properties_summarized["Year"] <= to_year
-    ]
+    properties_summarized = properties_summarized[properties_summarized["code_departement"] == selected_department]
+    properties_summarized = properties_summarized[properties_summarized["Year"] <= to_year]
     column_to_use = "Median Value SQM" if normalize_by_area else "Median Value"
 
     type_data = properties_summarized[properties_summarized["type_local"] == local_type]
@@ -34,9 +30,7 @@ def calculate_median_difference(
     # Calculate percentage difference between 2018 and selected_year
     try:
         value_2018 = type_data[type_data["Year"] == from_year][column_to_use].values[0]
-        value_selected_year = type_data[type_data["Year"] == to_year][
-            column_to_use
-        ].values[0]
+        value_selected_year = type_data[type_data["Year"] == to_year][column_to_use].values[0]
         percentage_diff = ((value_selected_year - value_2018) / value_2018) * 100
     except IndexError:
         percentage_diff = 0.0

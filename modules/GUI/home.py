@@ -111,8 +111,12 @@ class Home(Plotter):
 
         ### Set up the year selectbox
         years_range = data_sources_origin.get("available_years_datagouv")
-        years = [f"Vendus en {year}" for year in years_range]
-        default_year = years.index("Vendus en 2023")
+        if years_range:
+            years = [f"Vendus en {year}" for year in years_range]
+            default_year = years.index(f"Vendus en {years_range[-1]}")
+        else:
+            st.error("No available years found in data sources.")
+            return
 
         # if True: # Tests
         #     years.extend(['En vente 2024'])

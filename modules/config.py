@@ -44,7 +44,7 @@ def get_data_URL() -> dict[str, Any]:
     data_dict = {
         "summarized_data_url": f"{env_config.AWS_S3_URL}/geo_dvf_summarized_full.csv.gz",
         "datagouv_source_URL": env_config.DATA_GOUV_URL,
-        "available_years_datagouv": list(np.arange(2018, 2023 + 1)),
+        "available_years_datagouv": list(np.arange(2018, 2024 + 1)),
         "scrapped_year_current": f"{env_config.AWS_S3_URL}/2024_merged/departements",
     }
 
