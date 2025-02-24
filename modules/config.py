@@ -1,7 +1,7 @@
 import numpy as np
 
 from typing import Any
-from modules.env_config import load_env_config, load_toml_config
+from modules.config_env import load_env_config, load_toml_config
 
 
 def get_page_config() -> dict[str, Any]:
