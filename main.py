@@ -1,4 +1,3 @@
-from modules.config import page_config
 from modules.GUI.home import Home
 from modules.GUI.ui_components import (
     display_sidebar,
@@ -6,7 +5,7 @@ from modules.GUI.ui_components import (
     init_session_state,
 )
 
-init_page_config(page_config)
+init_page_config()
 
 
 

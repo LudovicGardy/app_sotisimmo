@@ -17,16 +17,16 @@ from modules.GUI.plotter import Plotter
 from ..config import (
     # azure_credentials,
     # bigquery_credentials,
-    data_URL,
-    firebase_credentials,
-    page_config,
+    get_data_URL,
+    get_firebase_credentials,
+    get_page_config,
 )
 from .ui_components import display_sidebar
 
-firebase_cred = firebase_credentials()
+firebase_cred = get_firebase_credentials()
 # azure_cred = azure_credentials()
 # bigquery_cred = bigquery_credentials()
-data_sources_origin = data_URL()
+data_sources_origin = get_data_URL()
 
 if firebase_cred:
     ### Secure way to store the firestore keys and provide them to start_tracking
@@ -48,13 +48,13 @@ class Home(Plotter):
     def __init__(self):
         print("Init the app...")
 
-        st.markdown(page_config().get("markdown"), unsafe_allow_html=True)
+        st.markdown(get_page_config().get("markdown"), unsafe_allow_html=True)
 
         self.data_loaded = True  # Variable to check if the data has been loaded
         self.properties_summarized = fetch_summarized_data()
 
         with st.sidebar:
-            display_sidebar(page_config)
+            display_sidebar()
             self.initial_request()
 
         if isinstance(self.properties_input, pd.DataFrame):

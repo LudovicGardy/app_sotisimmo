@@ -7,9 +7,9 @@ import streamlit as st
 from modules.AI.GPT import chatbot_GPT
 from modules.calculs import calculate_median_difference
 
-from ..config import data_URL
+from ..config import get_data_URL
 
-data_sources_origin = data_URL()
+data_sources_origin = get_data_URL()
 
 
 class Plotter:

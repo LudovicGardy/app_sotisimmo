@@ -9,7 +9,7 @@ import streamlit as st
 from google.cloud import bigquery
 from google.oauth2 import service_account
 
-from .config import data_URL, load_configurations
+from .config import get_data_URL, load_env_config
 
 
 @st.cache_data
@@ -17,7 +17,7 @@ def fetch_summarized_data() -> pd.DataFrame:
     print("Fetching summarized data...")
 
     ### Download data summarized from AWS S3
-    url = str(data_URL().get("summarized_data_url"))
+    url = str(get_data_URL().get("summarized_data_url"))
     response = requests.get(url)
 
     ### Store data in a buffer
@@ -41,7 +41,7 @@ def fetch_summarized_data() -> pd.DataFrame:
 def fetch_data_BigQuery(_cred_dict: dict[str, str], selected_dept: str) -> pd.DataFrame:
     print(f"Fetching data from BigQuery... Year: 2024, Department: {selected_dept}")
 
-    env_variables = load_configurations()
+    env_variables = load_env_config()
 
     # Créer un fichier JSON temporaire à l'aide de tempfile
     with tempfile.NamedTemporaryFile(mode="w", delete=False) as credentials_file:
@@ -120,7 +120,7 @@ def fetch_data_gouv(selected_dept: str, selected_year: int) -> pd.DataFrame:
     # Data from government are available only for the years 2018-2022
     try:
         ### Download data from the French open data portal
-        url = f"{data_URL().get('datagouv_source_URL')}/{selected_year}/departements/{selected_dept}.csv.gz"
+        url = f"{get_data_URL().get('datagouv_source_URL')}/{selected_year}/departements/{selected_dept}.csv.gz"
         response = requests.get(url)
 
         ### Store data in a buffer

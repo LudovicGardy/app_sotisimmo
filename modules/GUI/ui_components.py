@@ -1,23 +1,19 @@
-import random
-import time
-from typing import Callable
+from modules.config import get_page_config
 
 import streamlit as st
 
 
-def init_page_config(
-    page_config: Callable,
-):  ### Must be called before any other st. function
+def init_page_config():  ### Must be called before any other st. function
     st.set_page_config(
-        page_title=page_config().get("page_title"),
-        page_icon=page_config().get("page_icon"),
-        layout=page_config().get("layout"),
-        initial_sidebar_state=page_config().get("initial_sidebar_state"),
+        page_title=get_page_config().get("page_title"),
+        page_icon=get_page_config().get("page_icon"),
+        layout=get_page_config().get("layout"),
+        initial_sidebar_state=get_page_config().get("initial_sidebar_state"),
     )
 
 
-def display_sidebar(page_config: Callable):
-    logo_path = page_config().get("page_logo")
+def display_sidebar():
+    logo_path = get_page_config().get("page_logo")
     desired_width = 60
 
     col1, col2 = st.columns([1, 3])
@@ -25,9 +21,9 @@ def display_sidebar(page_config: Callable):
     with col1:
         st.image(logo_path, width=desired_width)
     with col2:
-        st.write(page_config().get("sidebar_title"))
+        st.write(get_page_config().get("sidebar_title"))
 
-    st.caption(page_config().get("page_description"))
+    st.caption(get_page_config().get("page_description"))
 
     st.divider()
 
