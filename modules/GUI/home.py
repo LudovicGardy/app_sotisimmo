@@ -15,8 +15,6 @@ from modules.GUI.plotter import Plotter
 
 ### Relative imports
 from ..config import (
-    # azure_credentials,
-    # bigquery_credentials,
     get_data_URL,
     get_firebase_credentials,
     get_page_config,
@@ -24,8 +22,6 @@ from ..config import (
 from .ui_components import display_sidebar
 
 firebase_cred = get_firebase_credentials()
-# azure_cred = azure_credentials()
-# bigquery_cred = bigquery_credentials()
 data_sources_origin = get_data_URL()
 
 if firebase_cred:
@@ -128,14 +124,9 @@ class Home(Plotter):
         )[-1]
 
         ### Load data
-        if "2024" not in self.selected_year:
-            self.properties_input = fetch_data_gouv(
-                self.selected_department, self.selected_year
-            )
-        else:
-            self.properties_input = fetch_data_BigQuery(
-                bigquery_cred, self.selected_department
-            )
+        self.properties_input = fetch_data_gouv(
+            self.selected_department, self.selected_year
+        )
 
         if self.properties_input is not None:
             ### Set up a copy of the dataframe
