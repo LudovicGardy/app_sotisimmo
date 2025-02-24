@@ -7,7 +7,6 @@ import streamlit as st
 import streamlit_analytics
 
 from modules.data_loader import (
-    fetch_data_BigQuery,
     fetch_data_gouv,
     fetch_summarized_data,
 )
