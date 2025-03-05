@@ -8,7 +8,7 @@
 
 Here's a little app that lets you dive into real estate transactions in France from 2018 to today. Use customizable filters to analyze market trends by region, year and property type. An ideal tool for individuals and professionals who wish to have an overview of the real estate market.
 
-🌐 Access the app and start your exploration now at [https://immo.sotisanalytics.com](https://immo.sotisanalytics.com).
+🌐 Access the app and start your exploration now at [https://immo.sotisai.com](https://immo.sotisai.com).
 
 | ![Image1](images/image1.jpeg) | ![Image2](images/image2.png) |
 |:---------------------:|:---------------------:|
