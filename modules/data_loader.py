@@ -1,15 +1,10 @@
-import json
-import os
 from io import BytesIO
-import tempfile
 
 import pandas as pd
 import requests
 import streamlit as st
-from google.cloud import bigquery
-from google.oauth2 import service_account
 
-from .config import get_data_URL, load_env_config
+from .config import get_data_URL
 
 
 @st.cache_data
@@ -37,51 +32,6 @@ def fetch_summarized_data() -> pd.DataFrame:
     return properties_summarized
 
 
-@st.cache_data
-def fetch_data_BigQuery(_cred_dict: dict[str, str], selected_dept: str) -> pd.DataFrame:
-    print(f"Fetching data from BigQuery... Year: 2024, Department: {selected_dept}")
-
-    env_variables = load_env_config()
-
-    # Créer un fichier JSON temporaire à l'aide de tempfile
-    with tempfile.NamedTemporaryFile(mode="w", delete=False) as credentials_file:
-        json.dump(_cred_dict, credentials_file)
-        credentials_path = credentials_file.name
-
-    # Utiliser le fichier JSON temporaire pour créer les credentials
-    credentials = service_account.Credentials.from_service_account_file(credentials_path)
-    client = bigquery.Client(credentials=credentials, project=_cred_dict["project_id"])
-
-    # Supprimer le fichier temporaire après utilisation
-    os.remove(credentials_path)
-
-    sql_query = f"""
-        SELECT DISTINCT
-            type_local,
-            valeur_fonciere,
-            code_postal,
-            surface,
-            longitude,
-            latitude
-        FROM
-            `{env_variables.get("BIGQUERY_PROJECT_ID")}.{env_variables.get("BIGQUERY_DATASET_ID")}.{env_variables.get("BIGQUERY_TABLE")}`
-        WHERE
-            code_departement = '{selected_dept}' AND
-            type_local IS NOT NULL
-    """
-
-    try:
-        # Exécutez la requête et stockez le résultat dans un DataFrame Pandas
-        df = client.query(sql_query).to_dataframe()
-        df.rename(columns={"surface": "surface_reelle_bati"}, inplace=True)
-        return df
-
-    except Exception as e:
-        st.warning("Les données n'ont pas pu être chargées depuis BigQuery.")
-        print(e)
-
-
-### Load data
 @st.cache_data
 def fetch_data_gouv(selected_dept: str, selected_year: int) -> pd.DataFrame:
     """

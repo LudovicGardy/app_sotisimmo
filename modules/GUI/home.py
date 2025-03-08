@@ -1,7 +1,3 @@
-### Absolute imports
-import json
-import tempfile
-
 import pandas as pd
 import streamlit as st
 
@@ -10,8 +6,6 @@ from modules.data_loader import (
     fetch_summarized_data,
 )
 from modules.GUI.plotter import Plotter
-
-### Relative imports
 from ..config import (
     get_data_URL,
     get_page_config,
@@ -72,20 +66,17 @@ class Home(Plotter):
             The colormap selected by the user.
         """
 
-        ### Set up the department selectbox
+        # Set up the department selectbox
         departments = [str(i).zfill(2) for i in range(1, 96)]
         departments.remove("20")
         departments.extend(["971", "972", "973", "974", "2A", "2B"])
         default_dept = departments.index("06")
-        self.selected_department = st.selectbox(
-            "Département", departments, index=default_dept
-        )
+        self.selected_department = st.selectbox("Département", departments, index=default_dept)
 
         # Check if the department has changed and reset the session state for the postcode if needed
         if (
             "previous_selected_department" in st.session_state
-            and st.session_state.previous_selected_department
-            != self.selected_department
+            and st.session_state.previous_selected_department != self.selected_department
         ):
             if "selected_postcode_title" in st.session_state:
                 del st.session_state.selected_postcode_title
@@ -95,7 +86,7 @@ class Home(Plotter):
         # Update the previous selected department in the session state
         st.session_state.previous_selected_department = self.selected_department
 
-        ### Set up the year selectbox
+        # Set up the year selectbox
         years_range = data_sources_origin.get("available_years_datagouv")
         if years_range:
             years = [f"Vendus en {year}" for year in years_range]
@@ -104,46 +95,31 @@ class Home(Plotter):
             st.error("No available years found in data sources.")
             return
 
-        # if True: # Tests
-        #     years.extend(['En vente 2024'])
-        #     default_year = years.index('En vente 2024')
+        self.selected_year = st.selectbox("Année", years, index=default_year).split(" ")[-1]
 
-        self.selected_year = st.selectbox("Année", years, index=default_year).split(
-            " "
-        )[-1]
-
-        ### Load data
-        self.properties_input = fetch_data_gouv(
-            self.selected_department, self.selected_year
-        )
+        # Load data
+        self.properties_input = fetch_data_gouv(self.selected_department, self.selected_year)
 
         if self.properties_input is not None:
-            ### Set up a copy of the dataframe
+            # Set up a copy of the dataframe
             self.properties_input = self.properties_input.copy()
 
-            ### Set up the property type selectbox
+            # Set up the property type selectbox
             self.local_types = sorted(self.properties_input["type_local"].unique())
-            selectbox_key = (
-                f"local_type_{self.selected_department}_{self.selected_year}"
-            )
-            self.selected_local_type = st.selectbox(
-                "Type de bien", self.local_types, key=selectbox_key
-            )
+            selectbox_key = f"local_type_{self.selected_department}_{self.selected_year}"
+            self.selected_local_type = st.selectbox("Type de bien", self.local_types, key=selectbox_key)
 
-            ### Set up the normalization checkbox
+            # Set up the normalization checkbox
             self.normalize_by_area = st.checkbox("Prix au m²", True)
 
             if self.normalize_by_area:
                 self.properties_input["valeur_fonciere"] = (
-                    (
-                        self.properties_input["valeur_fonciere"]
-                        / self.properties_input["surface_reelle_bati"]
-                    )
+                    (self.properties_input["valeur_fonciere"] / self.properties_input["surface_reelle_bati"])
                     .round()
                     .astype(int)
                 )
 
-            ### Set up the chatbot
+            # Set up the chatbot
             st.divider()
             with st.expander("Chatbot (Optionnel)"):
                 self.chatbot_checkbox = st.checkbox("Activer le chat bot", False)
@@ -167,12 +143,11 @@ class Home(Plotter):
                             st.warning("⚠️ Entrez une clé API **Open AI**.")
                     else:
                         # st.warning('⚠️ Entrez une clé API **Repliacte**.')
-                        st.error(
-                            "⚠️ Ce modèle n'est pas encore disponible. Veuillez utiliser GPT."
-                        )
+                        st.error("⚠️ Ce modèle n'est pas encore disponible. Veuillez utiliser GPT.")
                     # st.stop()
 
                 # st.markdown('Pour obtenir une clé API, rendez-vous sur le site de [openAI](https://platform.openai.com/api-keys).')
+
 
 if __name__ == "__main__":
     Home()
