@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "app-sotisimmo"
+version = "0.1.0"
+description = ""
+authors = ["Ludovic Gardy <ludovic.gardy@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.13"
+streamlit = "^1.43.1"
+openai = "^1.65.4"
+dotenv = "^0.9.9"
+plotly = "^6.0.0"
+seaborn = "^0.13.2"
+tiktoken = "^0.9.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
