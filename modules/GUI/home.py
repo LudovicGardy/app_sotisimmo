@@ -4,7 +4,6 @@ import tempfile
 
 import pandas as pd
 import streamlit as st
-import streamlit_analytics
 
 from modules.data_loader import (
     fetch_data_gouv,
@@ -15,24 +14,11 @@ from modules.GUI.plotter import Plotter
 ### Relative imports
 from ..config import (
     get_data_URL,
-    get_firebase_credentials,
     get_page_config,
 )
 from .ui_components import display_sidebar
 
-firebase_cred = get_firebase_credentials()
 data_sources_origin = get_data_URL()
-
-if firebase_cred:
-    ### Secure way to store the firestore keys and provide them to start_tracking
-    tfile = tempfile.NamedTemporaryFile(mode="w+")
-    json.dump(firebase_cred, tfile)
-    tfile.flush()
-    streamlit_analytics.start_tracking(
-        firestore_key_file=tfile.name, firestore_collection_name="sotisimmo_analytics"
-    )
-else:
-    print("No credentials were found. Analytics will not be tracked.")
 
 
 class Home(Plotter):
@@ -187,12 +173,6 @@ class Home(Plotter):
                     # st.stop()
 
                 # st.markdown('Pour obtenir une clé API, rendez-vous sur le site de [openAI](https://platform.openai.com/api-keys).')
-
-
-if firebase_cred:
-    streamlit_analytics.stop_tracking(
-        firestore_key_file=tfile.name, firestore_collection_name="sotisimmo_analytics"
-    )
 
 if __name__ == "__main__":
     Home()
