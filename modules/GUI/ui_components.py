@@ -1,9 +1,12 @@
 from modules.config import get_page_config
-
 import streamlit as st
 
 
-def init_page_config():  ### Must be called before any other st. function
+def init_page_config():
+    """
+    Set the page configuration (title, favicon, layout, etc.)
+    Must be called before ANY other st. function
+    """
     st.set_page_config(
         page_title=get_page_config().get("page_title"),
         page_icon=get_page_config().get("page_icon"),
