@@ -14,11 +14,9 @@ class EnvConfig:
     CLIENT_EMAIL: str
     CLIENT_ID: str
     CLIENT_X509_CERT_URL: str
-    OPENAI_API_KEY: str
     PRIVATE_KEY: str
     PRIVATE_KEY_ID: str
     PROJECT_ID: str
-    REPLICATE_API_KEY: str
     TOKEN_URI: str
     TYPE: str
     UNIVERSE_DOMAIN: str
@@ -42,11 +40,9 @@ class EnvConfig:
             "CLIENT_EMAIL": os.getenv("CLIENT_EMAIL"),
             "CLIENT_ID": os.getenv("CLIENT_ID"),
             "CLIENT_X509_CERT_URL": os.getenv("CLIENT_X509_CERT_URL"),
-            "OPENAI_API_KEY": os.getenv("OPENAI_API_KEY"),
             "PRIVATE_KEY": os.getenv("PRIVATE_KEY"),
             "PRIVATE_KEY_ID": os.getenv("PRIVATE_KEY_ID"),
             "PROJECT_ID": os.getenv("PROJECT_ID"),
-            "REPLICATE_API_KEY": os.getenv("REPLICATE_API_KEY"),
             "TOKEN_URI": os.getenv("TOKEN_URI"),
             "TYPE": os.getenv("TYPE"),
             "UNIVERSE_DOMAIN": os.getenv("UNIVERSE_DOMAIN"),
