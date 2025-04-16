@@ -70,21 +70,7 @@ class Home(Plotter):
         departments = [str(i).zfill(2) for i in range(1, 96)]
         departments.remove("20")
         departments.extend(["971", "972", "973", "974", "2A", "2B"])
-        default_dept = departments.index("06")
-        self.selected_department = st.selectbox("Département", departments, index=default_dept)
-
-        # Check if the department has changed and reset the session state for the postcode if needed
-        if (
-            "previous_selected_department" in st.session_state
-            and st.session_state.previous_selected_department != self.selected_department
-        ):
-            if "selected_postcode_title" in st.session_state:
-                del st.session_state.selected_postcode_title
-            if "selected_postcode" in st.session_state:
-                del st.session_state.selected_postcode
-
-        # Update the previous selected department in the session state
-        st.session_state.previous_selected_department = self.selected_department
+        self.selected_department = st.multiselect("Département", departments)#, default=["72", "53"])
 
         # Set up the year selectbox
         years_range = data_sources_origin.get("available_years_datagouv")
@@ -98,7 +84,9 @@ class Home(Plotter):
         self.selected_year = st.selectbox("Année", years, index=default_year).split(" ")[-1]
 
         # Load data
-        self.properties_input = fetch_data_gouv(self.selected_department, self.selected_year)
+        # Fetch and concatenate data for all selected departments
+        dfs = [fetch_data_gouv(dept, self.selected_year) for dept in self.selected_department]
+        self.properties_input = pd.concat(dfs, ignore_index=True) if dfs else None
 
         if self.properties_input is not None:
             # Set up a copy of the dataframe
@@ -107,7 +95,8 @@ class Home(Plotter):
             # Set up the property type selectbox
             self.local_types = sorted(self.properties_input["type_local"].unique())
             selectbox_key = f"local_type_{self.selected_department}_{self.selected_year}"
-            self.selected_local_type = st.selectbox("Type de bien", self.local_types, key=selectbox_key)
+            default_index = self.local_types.index("Maison") if "Maison" in self.local_types else 0
+            self.selected_local_type = st.selectbox("Type de bien", self.local_types, key=selectbox_key, index=default_index)
 
             # Set up the normalization checkbox
             self.normalize_by_area = st.checkbox("Prix au m²", True)

@@ -41,7 +41,7 @@ class Plotter:
                     immobilières effectuées entre {data_sources_origin.get('available_years_datagouv')[0]} et {data_sources_origin.get('available_years_datagouv')[-1]}.
         """)
 
-        self.tabs = st.tabs(["Carte", "Département", "Commune", "Evolution des prix"])
+        self.tabs = st.tabs(["Carte", "Département", "Commune"])
 
         if self.properties_input is None:
             st.error(
@@ -68,12 +68,6 @@ class Plotter:
         with self.tabs[2]:
             with st.container(border=True):
                 self.plot_4()
-
-        ### Section 3
-        ##- Defining a modifiable title using a placeholder (empty string)
-        with self.tabs[3]:
-            with st.container(border=True):
-                self.plot_3_condition()
 
         ### Section 6
         if self.chatbot_checkbox:
@@ -199,20 +193,26 @@ class Plotter:
 
         print(filtered_df.head())
 
-        size_column = "marker_size" if self.use_fixed_marker_size else "valeur_fonciere"
+        size_column = "marker_size" if self.use_fixed_marker_size else "valeur"
+
+        # Combine code postal and nom_commune
+        filtered_df["ville"] = filtered_df["code_postal"].astype(str) + " " + filtered_df["nom_commune"].astype(str)
+
+        # Rename columns
+        filtered_df = filtered_df.rename(columns={"longitude": "lon", "latitude": "lat", "valeur_fonciere": "valeur"})
 
         # Create the map
         fig = px.scatter_mapbox(
             filtered_df,
-            lat="latitude",
-            lon="longitude",
-            color="valeur_fonciere",
+            lat="lat",
+            lon="lon",
+            color="valeur",
             size=size_column,
             color_continuous_scale=self.selected_colormap,
             size_max=15,
             zoom=6,
             opacity=0.8,
-            hover_data=["code_postal", "valeur_fonciere", "longitude", "latitude"],
+            hover_data=["ville", "valeur", "lon", "lat"],
         )
 
         # Update the map style
@@ -227,7 +227,7 @@ class Plotter:
         )
         fig.update_layout(height=800)
 
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True, config={"scrollZoom": True})
 
     # @st.cache_data
     def plot_1(self):
@@ -372,7 +372,7 @@ class Plotter:
 
         # Filter the dataframe by the provided department code
         dept_data = self.properties_summarized[
-            self.properties_summarized["code_departement"] == self.selected_department
+            self.properties_summarized["code_departement"].isin(self.selected_department)
         ]
 
         # Generate a brighter linear color palette

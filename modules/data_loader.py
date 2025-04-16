@@ -88,6 +88,7 @@ def fetch_data_gouv(selected_dept: str, selected_year: int) -> pd.DataFrame:
                 "type_local",
                 "valeur_fonciere",
                 "code_postal",
+                "nom_commune",
                 "surface_reelle_bati",
                 "longitude",
                 "latitude",
