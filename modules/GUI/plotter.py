@@ -89,15 +89,6 @@ class Plotter:
                         étant regroupées par zones approximatives, contrairement aux données des années précédentes, qui sont 
                         présentées par adresse.""")
 
-        if (
-            "selected_postcode_title" in st.session_state
-            and st.session_state.selected_postcode_title
-        ):
-            map_title = f"Distribution des prix unitaires pour les :blue[{self.selected_local_type.lower()}s] dans le :blue[{st.session_state.selected_postcode_title}] en :blue[{self.selected_year}]"
-        else:
-            map_title = f"Distribution des prix unitaires pour les :blue[{self.selected_local_type.lower()}s] dans le :blue[{self.selected_department}] en :blue[{self.selected_year}]"
-        st.markdown(f"### {map_title}")
-
         print("Creating map...")
         col1, col2 = st.columns(2)  # Créer deux colonnes
 
@@ -130,15 +121,13 @@ class Plotter:
             )
 
         with col1:
-            self.use_fixed_marker_size = st.checkbox(
-                "Fixer la taille des points", False
-            )
+            self.marker_size_slider = st.slider("🔘 Taille des points", min_value=1, max_value=20, value=10, step=1)
 
             self.use_jitter = st.checkbox("Eviter la superposition des points", True)
 
             self.remove_outliers = st.checkbox("Supprimer les valeurs extrêmes", True)
             st.caption("""Retirer les valeurs extrêmes (>1.5*IQR) permet d'améliorer la lisibilité de la carte.
-                       Ces valeurs sont éliminées uniquement sur cette représentation, pas les prochaine.""")
+                    Ces valeurs sont éliminées uniquement sur cette représentation, pas les prochaine.""")
 
         if (
             self.selected_year
@@ -149,6 +138,7 @@ class Plotter:
                         'Eviter la superposition des points' ci-dessus.""")
 
         self.plot_map()
+
 
     # @st.cache_data
     def plot_map(self):
@@ -162,44 +152,40 @@ class Plotter:
             self.properties_input["type_local"] == self.selected_local_type
         ]
 
-        # Further filtering if a postcode is selected
-        if hasattr(st.session_state, "selected_postcode"):
-            filtered_df = filtered_df[
-                filtered_df["code_postal"] == st.session_state.selected_postcode
-            ]
+        # Rename columns
+        filtered_df = filtered_df.rename(columns={"longitude": "lon", "latitude": "lat", "valeur_fonciere": "valeur"})
 
         if self.remove_outliers:
             # Calculate Q1, Q3, and IQR
-            Q1 = filtered_df["valeur_fonciere"].quantile(0.25)
-            Q3 = filtered_df["valeur_fonciere"].quantile(0.75)
+            Q1 = filtered_df["valeur"].quantile(0.25)
+            Q3 = filtered_df["valeur"].quantile(0.75)
             IQR = Q3 - Q1
             # Calculate the upper fence (using 1.5xIQR)
             upper_fence = Q3 + 1.5 * IQR
             # Filter out outliers based on the upper fence
-            filtered_df = filtered_df[filtered_df["valeur_fonciere"] <= upper_fence]
+            filtered_df = filtered_df[filtered_df["valeur"] <= upper_fence]
 
-        # self.jitter_value = val if self.use_jitter else 0
-        filtered_df["longitude"] = filtered_df["longitude"].astype(float)
-        filtered_df["latitude"] = filtered_df["latitude"].astype(float)
-        filtered_df.loc[:, "latitude"] = filtered_df["latitude"] + np.random.uniform(
+        # Cast coordinates and apply jitter
+        filtered_df["lon"] = filtered_df["lon"].astype(float)
+        filtered_df["lat"] = filtered_df["lat"].astype(float)
+        filtered_df.loc[:, "lat"] += np.random.uniform(
             -self.jitter_value, self.jitter_value, size=len(filtered_df)
         )
-        filtered_df.loc[:, "longitude"] = filtered_df["longitude"] + np.random.uniform(
+        filtered_df.loc[:, "lon"] += np.random.uniform(
             -self.jitter_value, self.jitter_value, size=len(filtered_df)
         )
 
-        # Add a column with a fixed size for all markers
-        filtered_df = filtered_df.assign(marker_size=0.5)
+        # Fix marker size according to slider
+        size_column = "marker_size"
+        filtered_df = filtered_df.assign(marker_size=self.marker_size_slider)
 
         print(filtered_df.head())
 
-        size_column = "marker_size" if self.use_fixed_marker_size else "valeur"
-
-        # Combine code postal and nom_commune
+        # Combine code postal and commune name
         filtered_df["ville"] = filtered_df["code_postal"].astype(str) + " " + filtered_df["nom_commune"].astype(str)
 
-        # Rename columns
-        filtered_df = filtered_df.rename(columns={"longitude": "lon", "latitude": "lat", "valeur_fonciere": "valeur"})
+        # Add department code
+        filtered_df["departement"] = filtered_df["code_postal"].astype(str).str[:2]
 
         # Create the map
         fig = px.scatter_mapbox(
@@ -209,7 +195,7 @@ class Plotter:
             color="valeur",
             size=size_column,
             color_continuous_scale=self.selected_colormap,
-            size_max=15,
+            size_max=self.marker_size_slider,  # Dynamically adapt size_max
             zoom=6,
             opacity=0.8,
             hover_data=["ville", "valeur", "lon", "lat"],
@@ -228,6 +214,7 @@ class Plotter:
         fig.update_layout(height=800)
 
         st.plotly_chart(fig, use_container_width=True, config={"scrollZoom": True})
+
 
     # @st.cache_data
     def plot_1(self):

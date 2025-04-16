@@ -32,5 +32,4 @@ def display_sidebar():
 
 
 def init_session_state():
-    if "selected_postcode_title" not in st.session_state:
-        st.session_state.selected_postcode_title = None
+    pass
