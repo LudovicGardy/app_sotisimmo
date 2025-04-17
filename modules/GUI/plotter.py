@@ -69,7 +69,7 @@ class Plotter:
             with st.container(border=True):
                 self.plot_4()
 
-        ### Section 6
+        ### Section 5
         if self.chatbot_checkbox:
             st.markdown("### Votre assistant virtuel")
             if self.selected_model == "GPT 4":
