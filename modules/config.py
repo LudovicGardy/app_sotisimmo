@@ -28,7 +28,7 @@ def get_page_config() -> dict[str, Any]:
                     </style>
                     """,
         "page_description": """Ce prototype propose de répondre à un besoin de lecture plus claire du marché immobilier. 
-                    \nRendez-vous sur https://www.sotisanalytics.com pour en savoir plus, signaler un problème, une idée ou pour me contacter. Bonne visite ! 
+                    \nRendez-vous sur https://www.sotisai.com pour en savoir plus, signaler un problème, une idée ou pour me contacter. Bonne visite ! 
                     \nSotis A.I.© 2023""",
     }
 

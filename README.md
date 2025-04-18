@@ -100,4 +100,4 @@ Here's a little app that lets you dive into real estate transactions in France f
 
 ## 👤 Author
 - LinkedIn: [Ludovic Gardy](https://www.linkedin.com/in/ludovic-gardy/)
-- Website: [https://www.sotisanalytics.com](https://www.sotisanalytics.com)
+- Website: [https://www.sotisai.com](https://www.sotisai.com)
