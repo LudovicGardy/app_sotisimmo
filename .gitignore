@@ -19,3 +19,4 @@ Shared_scripts.pyproj
 Shared_scripts.sln
 start_demo_extended.ipynb
 app.py
+*.egg-info

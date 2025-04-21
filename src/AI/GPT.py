@@ -1,5 +1,5 @@
 from openai import OpenAI
-from modules.utils.utils import num_tokens_from_string
+from src.utils.utils import num_tokens_from_string
 
 def chatbot_GPT(self, st):
 

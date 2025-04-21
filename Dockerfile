@@ -1,19 +1,19 @@
 # Utiliser une image Python compatible
-FROM python:3.13-rc-slim
+FROM python:3.11-slim
 
 # Définir le dossier de travail
 WORKDIR /app
 
-# Installer Poetry correctement (avec curl)
+# Installer uv (avec curl)
 RUN apt-get update && apt-get install -y curl && \
-    curl -sSL https://install.python-poetry.org | python3 - && \
-    ln -s /root/.local/bin/poetry /usr/local/bin/poetry
+    curl -sSL https://astral.sh/uv/install.sh | sh && \
+    ln -s ~/.cargo/bin/uv /usr/local/bin/uv
 
-# Copier les fichiers de configuration de Poetry
-COPY pyproject.toml poetry.lock ./
+# Copier le fichier de configuration du projet
+COPY pyproject.toml ./
 
-# Installer les dépendances sans installer le projet lui-même
-RUN poetry install --no-interaction --no-ansi --no-root
+# Installer les dépendances avec uv
+RUN uv pip install --system -e .
 
 # Copier le reste du code de l'application
 COPY . .
@@ -22,4 +22,4 @@ COPY . .
 EXPOSE 8501
 
 # Lancer l'application
-CMD ["poetry", "run", "streamlit", "run", "main.py", "--server.port=8501", "--server.address=0.0.0.0"]
+CMD ["streamlit", "run", "main.py", "--server.port=8501", "--server.address=0.0.0.0"]
