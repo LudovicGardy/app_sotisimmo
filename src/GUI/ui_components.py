@@ -1,4 +1,4 @@
-from modules.config import get_page_config
+from src.config import get_page_config
 import streamlit as st
 
 

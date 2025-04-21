@@ -1,11 +1,11 @@
 import pandas as pd
 import streamlit as st
 
-from modules.data_loader import (
+from src.data_loader import (
     fetch_data_gouv,
     fetch_summarized_data,
 )
-from modules.GUI.plotter import Plotter
+from src.GUI.plotter import Plotter
 from ..config import (
     get_data_URL,
     get_page_config,

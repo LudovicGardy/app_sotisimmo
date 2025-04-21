@@ -4,8 +4,8 @@ import plotly.graph_objects as go
 import seaborn as sns
 import streamlit as st
 
-from modules.AI.GPT import chatbot_GPT
-from modules.calculs import calculate_median_difference
+from src.AI.GPT import chatbot_GPT
+from src.calculs import calculate_median_difference
 
 from ..config import get_data_URL
 
