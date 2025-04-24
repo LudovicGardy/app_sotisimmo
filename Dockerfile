@@ -1,25 +1,54 @@
-FROM python:3.13-rc-slim
+# ===============================
+# Stage 1: build with all tools
+# ===============================
+FROM python:3.13-rc-slim AS builder
 
 WORKDIR /app
 
-# Install system tools and uv package manager
-RUN apt-get update && apt-get install -y gcc libffi-dev build-essential && \
-    pip install --upgrade pip && pip install uv && \
+# Install necessary tools to compile packages
+RUN apt-get update && apt-get install -y gcc libffi-dev build-essential curl && \
+    pip install --upgrade pip && \
+    pip install uv && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Copy dependency definition file
+# Copy only the config file
 COPY pyproject.toml ./
 
-# Generate a pinned requirements.txt file from pyproject.toml
-RUN uv pip compile --output-file requirements.txt pyproject.toml
+# Generate requirements.txt file from pyproject.toml
+RUN uv pip compile --output-file=requirements.txt pyproject.toml
 
-# Install dependencies using uv
-RUN uv pip install --system --requirement requirements.txt
+# Install dependencies in a temporary venv
+RUN python -m venv /venv && \
+    /venv/bin/pip install --upgrade pip && \
+    /venv/bin/pip install -r requirements.txt
 
-# Copy the rest of the application code
+# ===============================
+# Stage 2: lightweight image for execution
+# ===============================
+FROM python:3.13-rc-slim AS runtime
+
+# Create a non-root user
+RUN useradd -m appuser
+
+WORKDIR /app
+
+# Copy only the venv from the build image
+COPY --from=builder /venv /venv
+
+# Activate the venv
+ENV PATH="/venv/bin:$PATH"
+
+# Copy the app code
 COPY . .
 
+# User permissions
+RUN chown -R appuser:appuser /app
+
+# Use secure user
+USER appuser
+
+# Expose Streamlit port
 EXPOSE 8501
 
-# Launch command for the Streamlit application
+# Launch the app
 CMD ["streamlit", "run", "main.py", "--server.port=8501", "--server.address=0.0.0.0"]
