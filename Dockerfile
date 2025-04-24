@@ -1,25 +1,25 @@
-# Utiliser une image Python compatible
 FROM python:3.13-rc-slim
 
-# Définir le dossier de travail
 WORKDIR /app
 
-# Installer Poetry correctement (avec curl)
-RUN apt-get update && apt-get install -y curl && \
-    curl -sSL https://install.python-poetry.org | python3 - && \
-    ln -s /root/.local/bin/poetry /usr/local/bin/poetry
+# Install system tools and uv package manager
+RUN apt-get update && apt-get install -y gcc libffi-dev build-essential && \
+    pip install --upgrade pip && pip install uv && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Copier les fichiers de configuration de Poetry
-COPY pyproject.toml poetry.lock ./
+# Copy dependency definition file
+COPY pyproject.toml ./
 
-# Installer les dépendances sans installer le projet lui-même
-RUN poetry install --no-interaction --no-ansi --no-root
+# Generate a pinned requirements.txt file from pyproject.toml
+RUN uv pip compile --output-file requirements.txt pyproject.toml
 
-# Copier le reste du code de l'application
+# Install dependencies using uv
+RUN uv pip install --system --requirement requirements.txt
+
+# Copy the rest of the application code
 COPY . .
 
-# Exposer le port de Streamlit
 EXPOSE 8501
 
-# Lancer l'application
-CMD ["poetry", "run", "streamlit", "run", "main.py", "--server.port=8501", "--server.address=0.0.0.0"]
+# Launch command for the Streamlit application
+CMD ["streamlit", "run", "main.py", "--server.port=8501", "--server.address=0.0.0.0"]

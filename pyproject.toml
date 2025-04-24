@@ -1,23 +1,18 @@
-[tool.poetry]
+[project]
 name = "app-sotisimmo"
 version = "0.1.0"
-description = ""
-authors = ["Ludovic Gardy <ludovic.gardy@gmail.com>"]
+description = "Add your description here"
 readme = "README.md"
-
-[tool.poetry.dependencies]
-python = "^3.11"
-streamlit = "^1.43.1"
-openai = "^1.65.4"
-dotenv = "^0.9.9"
-plotly = "^6.0.0"
-seaborn = "^0.13.2"
-tiktoken = "^0.9.0"
-
-
-[tool.poetry.group.dev.dependencies]
-ipykernel = "^6.29.5"
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires-python = ">=3.11"
+dependencies = [
+    "ipykernel>=6.29.5",
+    "matplotlib>=3.10.1",
+    "numpy>=2.2.5",
+    "openai>=1.76.0",
+    "plotly>=6.0.1",
+    "python-dotenv>=1.1.0",
+    "scikit-learn>=1.6.1",
+    "seaborn>=0.13.2",
+    "streamlit>=1.44.1",
+    "tiktoken>=0.9.0",
+]
