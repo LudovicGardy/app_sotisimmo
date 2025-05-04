@@ -41,6 +41,7 @@ def create_sidebar():
     )
     
     st.sidebar.markdown(config["page"].sidebar_title)
+    st.sidebar.markdown(config["page"].page_description)
     st.sidebar.markdown("---")
     
     # Year selection
@@ -91,7 +92,7 @@ def create_sidebar():
     
     # Footer
     st.sidebar.markdown("---")
-    st.sidebar.markdown(config["page"].page_description)
+    st.sidebar.markdown(config["page"].footer)
 
 
 def main():

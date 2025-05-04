@@ -23,7 +23,7 @@ class PageConfig:
     author: str
     markdown: str
     page_description: str
-
+    footer: str
 
 @dataclass
 class DataConfig:
@@ -60,8 +60,9 @@ def get_page_config() -> PageConfig:
                 }
             </style>
         """,
-        page_description="""Rendez-vous sur https://www.sotisai.com pour en savoir plus, signaler un problème, une idée ou pour me contacter. Bonne visite ! 
-            \nSotis A.I.© 2023"""
+        page_description="""Rendez-vous sur https://www.sotisai.com pour en savoir plus, 
+        signaler un problème, une idée ou pour me contacter. Bonne visite !""",
+        footer="Sotis A.I.© 2023"
     )
 
 
