@@ -10,7 +10,7 @@ import pandas as pd
 import requests
 import streamlit as st
 
-from src.utils.config import get_data_config
+from src.config.config import get_data_config
 
 
 class DataLoader:

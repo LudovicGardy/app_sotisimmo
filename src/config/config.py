@@ -4,12 +4,12 @@ This module handles all configuration settings including page layout, data sourc
 """
 
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Any, Dict, List
 
 import numpy as np
 
-from src.utils.config_env import load_env_config, load_toml_config
+from src.config.config_env import load_env_config, load_toml_config
+from src.config.years import AVAILABLE_YEARS
 
 
 @dataclass
@@ -62,8 +62,7 @@ def get_page_config() -> PageConfig:
                 }
             </style>
         """,
-        page_description="""Ce prototype propose de répondre à un besoin de lecture plus claire du marché immobilier. 
-            \nRendez-vous sur https://www.sotisai.com pour en savoir plus, signaler un problème, une idée ou pour me contacter. Bonne visite ! 
+        page_description="""Rendez-vous sur https://www.sotisai.com pour en savoir plus, signaler un problème, une idée ou pour me contacter. Bonne visite ! 
             \nSotis A.I.© 2023"""
     )
 
@@ -80,7 +79,7 @@ def get_data_config() -> DataConfig:
     return DataConfig(
         summarized_data_url=f"{env_config.AWS_S3_URL}/geo_dvf_summarized_full.csv.gz",
         datagouv_source_url=env_config.DATA_GOUV_URL,
-        available_years_datagouv=list(np.arange(2018, 2024 + 1)),
+        available_years_datagouv=AVAILABLE_YEARS,
         scrapped_year_current=f"{env_config.AWS_S3_URL}/2024_merged/departements"
     )
 
