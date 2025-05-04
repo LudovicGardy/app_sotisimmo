@@ -6,8 +6,6 @@ This module handles all configuration settings including page layout, data sourc
 from dataclasses import dataclass
 from typing import Any, Dict, List
 
-import numpy as np
-
 from src.config.config_env import load_env_config, load_toml_config
 from src.config.years import AVAILABLE_YEARS
 
