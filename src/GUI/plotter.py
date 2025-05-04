@@ -4,8 +4,6 @@ import plotly.graph_objects as go
 import seaborn as sns
 import streamlit as st
 
-from src.AI.GPT import chatbot_GPT
-from src.calculs import calculate_median_difference
 
 from ..config import get_data_URL
 
@@ -68,14 +66,6 @@ class Plotter:
         with self.tabs[2]:
             with st.container(border=True):
                 self.plot_4()
-
-        ### Section 5
-        if self.chatbot_checkbox:
-            st.markdown("### Votre assistant virtuel")
-            if self.selected_model == "GPT 4":
-                chatbot_GPT(self, st)
-            # elif self.selected_model == "Llama2-7B":
-            #     self.chatbot_Llama2_7B()
 
     def plot_map_widgets(self):
         # Afficher l'alerte si l'année sélectionnée est 2024
@@ -337,160 +327,6 @@ class Plotter:
         ):
             st.warning("La figure ne peut pas être calculée pour l'année 2024.")
             st.divider()
-
-    def plot_3(self):
-        print("Creating plot 3 widgets...")
-        # Add a selectbox for choosing between bar and line plot
-        # plot_types = ["Bar", "Line"]
-        # selected_plot_type = st.selectbox("Selectionner une visualisation", plot_types, index=0)
-
-        self.selected_plot_type = st.radio(
-            "Type",
-            ["Graphique en barres", "Graphique en lignes"],
-            label_visibility="hidden",
-        )
-
-        # Determine the column to display
-        self.value_column = (
-            "Median Value SQM" if self.normalize_by_area else "Median Value"
-        )
-
-        print("Creating plot 3...")
-
-        # Filter the dataframe by the provided department code
-        dept_data = self.properties_summarized[
-            self.properties_summarized["code_departement"].isin(self.selected_department)
-        ]
-
-        # Generate a brighter linear color palette
-        years = sorted(dept_data["Year"].unique())
-        local_types = dept_data["type_local"].unique()
-
-        # Liste des couleurs bleues
-        blue_palette = [
-            "#08519c",
-            "#3182bd",
-            "#6baed6",
-            "#bdd7e7",
-            "#eff3ff",
-            "#ffffff",
-        ]
-
-        # Assurez-vous que le nombre de couleurs dans la palette correspond au nombre d'années
-        if len(blue_palette) != len(years):
-            st.error(
-                "Le nombre de couleurs dans la palette ne correspond pas au nombre d'années."
-            )
-            return
-
-        if self.selected_plot_type == "Graphique en barres":
-            cols = st.columns(len(local_types))
-
-            # Associez chaque année à une couleur
-            year_to_color = dict(zip(sorted(years), blue_palette))
-
-            for idx, local_type in enumerate(local_types):
-                annual_average_diff, percentage_diff = calculate_median_difference(
-                    self.properties_summarized,
-                    self.selected_department,
-                    self.normalize_by_area,
-                    local_type,
-                    self.selected_year,
-                )
-                with cols[idx]:
-                    if annual_average_diff > 0:
-                        st.metric(
-                            label=local_type,
-                            value=f"+{annual_average_diff:.2f} €",
-                            delta=f"{percentage_diff:.2f} % depuis {int(self.selected_year)-1}",
-                        )
-                    else:
-                        st.metric(
-                            label=local_type,
-                            value=f"{annual_average_diff:.2f} €",
-                            delta=f"{percentage_diff:.2f} % depuis {int(self.selected_year)-1}",
-                        )
-
-                    prop_data = dept_data[dept_data["type_local"] == local_type]
-
-                    # Créez une liste pour stocker les tracés
-                    traces = []
-                    for year in prop_data["Year"].unique():
-                        year_data = prop_data[prop_data["Year"] == year]
-                        traces.append(
-                            go.Bar(
-                                x=year_data["Year"],
-                                y=year_data[self.value_column],
-                                name=str(year),
-                                marker_color=year_to_color[year],
-                            )
-                        )
-
-                    layout = go.Layout(
-                        barmode="group",
-                        height=400,
-                        showlegend=False,
-                        title={
-                            "text": f"Variations de 2018 à {self.selected_year}",
-                            "x": 0.5,  # Centre le titre en largeur
-                            "xanchor": "center",  # Ancre le titre au centre
-                            "yanchor": "top",  # Positionne le titre en haut
-                            "font": {"family": "Arial", "color": "white"},
-                        },
-                    )
-
-                    fig = go.Figure(data=traces, layout=layout)
-                    st.plotly_chart(fig, use_container_width=True)
-
-        else:
-            cols = st.columns(len(local_types))
-
-            for idx, local_type in enumerate(local_types):
-                annual_average_diff, percentage_diff = calculate_median_difference(
-                    self.properties_summarized,
-                    self.selected_department,
-                    self.normalize_by_area,
-                    local_type,
-                    self.selected_year,
-                )
-
-                with cols[idx]:
-                    if annual_average_diff > 0:
-                        st.metric(
-                            label=local_type,
-                            value=f"+{annual_average_diff:.2f} €",
-                            delta=f"{percentage_diff:.2f} % depuis {data_sources_origin.get('available_years_datagouv')[0]}",
-                        )
-                    else:
-                        st.metric(
-                            label=local_type,
-                            value=f"{annual_average_diff:.2f} €",
-                            delta=f"{percentage_diff:.2f} % depuis {data_sources_origin.get('available_years_datagouv')[0]}",
-                        )
-
-            fig = px.line(
-                dept_data,
-                x="Year",
-                y=self.value_column,
-                color="type_local",
-                labels={"median_value": "Prix médian en €", "Year": "Année"},
-                markers=True,
-                height=600,
-                title=f"Variations de 2018 à {self.selected_year}",
-            )
-
-            fig.update_layout(
-                xaxis_title="Type de bien",
-                yaxis_title="Prix médian en €",
-                legend_title="Type de bien",
-                height=600,
-            )
-            fig.update_layout(
-                legend_orientation="h",
-                legend=dict(y=1.1, x=0.5, xanchor="center", title_text=""),
-            )
-
-            st.plotly_chart(fig, use_container_width=True)
 
     def plot_4(self):
         self.fig4_title = st.empty()
