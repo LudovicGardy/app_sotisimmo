@@ -46,7 +46,7 @@ def get_page_config() -> PageConfig:
 
     return PageConfig(
         page_title=toml_config.get("page_title", "Sotis Immobilier"),
-        sidebar_title=f"# {toml_config.get('sidebar_title', 'Sotis A.I.')}",
+        sidebar_title=f"# {toml_config.get('sidebar_title', 'Sotis Immobilier')}",
         base=toml_config.get("base", "dark"),
         page_icon=f"{env_config.AWS_S3_URL}/Sotis_AI_pure_darkbg_240px.ico",
         page_logo=f"{env_config.AWS_S3_URL}/Sotis_AI_pure_darkbg_240px.png",
@@ -60,7 +60,7 @@ def get_page_config() -> PageConfig:
                 }
             </style>
         """,
-        page_description="""Rendez-vous sur https://www.sotisai.com pour en savoir plus, 
+        page_description="""Rendez-vous sur [sotisai.com](https://www.sotisai.com) pour en savoir plus, 
         signaler un problème, une idée ou pour me contacter. Bonne visite !""",
         footer="Sotis A.I.© 2023"
     )
